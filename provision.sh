@@ -16,7 +16,6 @@ mkdir -p "$AWS_DIR"
 # AWS CREDENTIALS
 #################################################
 
-# Check if credentials already exist
 if [[ -f "$CREDENTIALS_FILE" ]]; then
     echo "Using existing AWS credentials from:"
     echo "$CREDENTIALS_FILE"
@@ -43,7 +42,7 @@ fi
 echo
 
 #################################################
-# S3 BUCKET
+# GITLAB PERSONAL ACCESS TOKEN
 #################################################
 
 if [[ -f "$ENV_FILE" ]] && grep -q "^GITLAB_PAT=" "$ENV_FILE"; then
@@ -65,7 +64,7 @@ fi
 echo
 
 #################################################
-# S3 BUCKET
+# KAFKA CONNECT S3 BUCKET
 #################################################
 
 if test -f "$CONNECTOR_OUTPUT"; then

@@ -12,6 +12,7 @@
       ansible.builtin.apt:
         name:
           - default-jdk
+          - unzip
         update_cache: true
         cache_valid_time: 3600
 

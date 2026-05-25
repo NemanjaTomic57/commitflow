@@ -6,7 +6,7 @@
     "topics": "git.projects,git.commits",
 
     "s3.region": "eu-central-1",
-    "s3.bucket.name": "git-logs-761018874759",
+    "s3.bucket.name": "<S3_BUCKET_NAME>",
     "s3.part.size": "5242880",
 
     "flush.size": "10",

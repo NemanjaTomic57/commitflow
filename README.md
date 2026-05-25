@@ -60,7 +60,7 @@ The goal is not only to use Kafka, but to understand how distributed streaming s
 
 ### Local Development
 
-The development environment will use **Docker Compose** to provide:
+The development environment will use **Vagrant** to provide:
 
 - Kafka cluster
 - Kafka Connect
@@ -80,7 +80,7 @@ The long-term goal is to create a reproducible and scalable streaming platform s
 - **Apache Kafka**
 - **Kafka Connect**
 - **librdkafka**
-- **Docker & Docker Compose**
+- **Vagrant**
 - **Terraform**
 - **Ansible**
 - **Grafana**

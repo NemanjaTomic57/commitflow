@@ -2,6 +2,8 @@
 
 To run this application in your development environment, you will need to fulfill the following prerequisites:
 
+First, git pull the project.
+
 - Install Virtualbox
 - Install Vagrant
 - Install Ansible

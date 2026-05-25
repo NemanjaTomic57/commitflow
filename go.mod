@@ -1,4 +1,4 @@
-module kafka
+module github.com/NemanjaTomic57/commitflow
 
 go 1.25.0
 

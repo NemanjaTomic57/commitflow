@@ -1,23 +1,117 @@
 # CommitFlow
 
-The project is a pilot project focused on providing a PoC for Kafka and Kafka Connect.
+**CommitFlow** transforms Git events into actionable engineering intelligence using Kafka-powered streaming and cloud-native analytics.
 
-## What This Project Is (... And What It Is Not)
+The project explores how modern event-driven systems are built end-to-end with Apache Kafka — from ingesting external API data to processing, storage, and visualization.
 
-The goal of the project is to get a thorough understanding of the Kafka ecosystem, specifically how it works together with external data sources and destinations. The main focus is to grasp the underlying technology in its fullest by implementing a real-world use case. The leading question is the following:
+---
 
-**How are scalable solutions for data streaming implemented in Kafka end to end?**
+## Overview
 
-Principles like high availability are not part of the requirements, as speed and flexibility are of greater importance.
+This project is designed as a hands-on deep dive into the Kafka ecosystem and surrounding infrastructure.
 
-## Requirements
+Instead of building a toy example, CommitFlow implements a realistic streaming pipeline that collects development activity from platforms like GitHub and GitLab, processes it through Kafka, and delivers insights through analytics and dashboards.
 
-We will create a Kafka cluster in a virtual machine with the following requirements:
+The central question driving this project is:
 
-- Configure a scalable Kafka infrastructure with Ansible and Terraform
-- Fetch data from GitHub and GitLab APIs with cron jobs
-- Push the data to Kafka topics with the librdkafka library
-- Use Kafka Connect to sink the data to S3
-- Create a dashboard in Grafana to display metrics
+> **How can scalable, production-ready data streaming systems be implemented with Kafka from end to end?**
 
-We plan to create a development environment using Docker Compose. Later, we'll set up a production environment on Hetzner Cloud with Docker for the runtime environment. 
+---
+
+## Architecture Goals
+
+The project focuses on understanding how Kafka integrates with:
+
+- External APIs and event sources
+- Producers and consumers
+- Kafka Connect
+- Object storage systems
+- Monitoring and observability tooling
+- Infrastructure automation and deployment workflows
+
+The goal is not only to use Kafka, but to understand how distributed streaming systems are designed, deployed, and operated in production environments.
+
+---
+
+## Planned Features
+
+### Infrastructure & Deployment
+
+- Provision infrastructure using **Terraform**
+- Configure services with **Ansible**
+- Deploy scalable Kafka components in a cloud environment
+- Support both local development and production deployments
+
+### Data Ingestion
+
+- Fetch repository activity from:
+  - GitHub API
+  - GitLab API
+- Schedule ingestion jobs using cron-based workers
+- Publish events to Kafka topics using **librdkafka**
+
+### Streaming & Storage
+
+- Design topic structures for scalable event processing
+- Use **Kafka Connect** for data integration
+- Sink streamed data into **Amazon S3-compatible storage**
+
+### Monitoring & Analytics
+
+- Collect operational metrics
+- Visualize pipeline health and engineering insights with **Grafana**
+- Monitor Kafka infrastructure and throughput
+
+---
+
+## Environments
+
+### Local Development
+
+The development environment will use **Docker Compose** to provide:
+
+- Kafka cluster
+- Kafka Connect
+- Supporting services
+- Local observability stack
+
+This setup allows rapid experimentation and local testing.
+
+### Production
+
+The production environment will be deployed on **Hetzner Cloud** using Docker-based workloads and infrastructure automation.
+
+The long-term goal is to create a reproducible and scalable streaming platform suitable for real-world workloads.
+
+---
+
+## Tech Stack
+
+- **Apache Kafka**
+- **Kafka Connect**
+- **librdkafka**
+- **Docker & Docker Compose**
+- **Terraform**
+- **Ansible**
+- **Grafana**
+- **Amazon S3-compatible storage**
+- **Hetzner Cloud**
+
+---
+
+## Learning Objectives
+
+This project aims to build practical experience with:
+
+- Event-driven architecture
+- Distributed streaming systems
+- Infrastructure as Code (IaC)
+- Cloud-native deployment strategies
+- Scalable data pipelines
+- Kafka operations and observability
+
+---
+
+## Project Status
+
+🚧 Work in progress — the architecture and infrastructure are actively being designed and implemented.

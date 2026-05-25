@@ -170,7 +170,12 @@ func main() {
 		log.Fatalln("main() -> error loading .env file")
 	}
 
-	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost"})
+	bootstrapServer := os.Getenv("KAFKA_BOOTSTRAP_SERVER")
+	if bootstrapServer == "" {
+		log.Fatal("KAFKA_BOOTSTRAP_SERVER is not set")
+	}
+
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "192.168.56.10:9092"})
 	if err != nil {
 		log.Fatal("main() -> error creating Kafka producer: ", err)
 	}

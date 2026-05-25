@@ -71,7 +71,7 @@ This setup allows rapid experimentation and local testing.
 
 ### Production
 
-The production environment will be deployed on **Hetzner Cloud** using Docker-based workloads and infrastructure automation.
+The production environment will be deployed on **Hetzner Cloud** using Terraform and Ansible for infrastructure automation.
 
 The long-term goal is to create a reproducible and scalable streaming platform suitable for real-world workloads.
 

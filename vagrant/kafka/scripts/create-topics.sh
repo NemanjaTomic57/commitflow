@@ -4,7 +4,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-BOOTSTRAP_SERVER="localhost:9092"
+BOOTSTRAP_SERVER="192.168.56.10:9092"
 
 delete_topic() {
   local topic="$1"

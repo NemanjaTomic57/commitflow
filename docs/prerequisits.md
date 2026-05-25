@@ -8,6 +8,9 @@ To run this application in your development environment, you will need to fulfil
 - Install Golang
 - S3 bucket in AWS
 - AWS IAM user with permissions to the bucket
+- GitLab Personal Access Token
+
+## AWS IAM
 
 Before we provision the virtual machine with Vagrant, we first have to add the credentials for the S3 bucket into /vagrant/.aws/credentials.
 
@@ -52,7 +55,11 @@ For this, follow the following steps:
 
 Don't forget to fill in the placeholder for the bucket name in the policy.
 
+## GitLab Personal Access Token
+
 We also need a personal access token for GitLab and GitHub APIs. Create them in your account and add them to the project by copying the environment file example and filling out the placeholders.
+
+The personal access token needs the API permissions.
 
 ## Provision the VM with Vagrant
 

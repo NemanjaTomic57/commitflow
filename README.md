@@ -4,8 +4,6 @@
 
 The project explores how modern event-driven systems are built end-to-end with Apache Kafka — from ingesting external API data to processing, storage, and visualization.
 
----
-
 ## Overview
 
 This project is designed as a hands-on deep dive into the Kafka ecosystem and surrounding infrastructure.
@@ -15,8 +13,6 @@ Instead of building a toy example, CommitFlow implements a realistic streaming p
 The central question driving this project is:
 
 > **How can scalable, production-ready data streaming systems be implemented with Kafka from end to end?**
-
----
 
 ## Architecture Goals
 
@@ -30,8 +26,6 @@ The project focuses on understanding how Kafka integrates with:
 - Infrastructure automation and deployment workflows
 
 The goal is not only to use Kafka, but to understand how distributed streaming systems are designed, deployed, and operated in production environments.
-
----
 
 ## Planned Features
 
@@ -62,8 +56,6 @@ The goal is not only to use Kafka, but to understand how distributed streaming s
 - Visualize pipeline health and engineering insights with **Grafana**
 - Monitor Kafka infrastructure and throughput
 
----
-
 ## Environments
 
 ### Local Development
@@ -83,8 +75,6 @@ The production environment will be deployed on **Hetzner Cloud** using Docker-ba
 
 The long-term goal is to create a reproducible and scalable streaming platform suitable for real-world workloads.
 
----
-
 ## Tech Stack
 
 - **Apache Kafka**
@@ -97,8 +87,6 @@ The long-term goal is to create a reproducible and scalable streaming platform s
 - **Amazon S3-compatible storage**
 - **Hetzner Cloud**
 
----
-
 ## Learning Objectives
 
 This project aims to build practical experience with:
@@ -109,8 +97,6 @@ This project aims to build practical experience with:
 - Cloud-native deployment strategies
 - Scalable data pipelines
 - Kafka operations and observability
-
----
 
 ## Project Status
 

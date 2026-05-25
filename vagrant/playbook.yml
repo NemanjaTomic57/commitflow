@@ -1,0 +1,249 @@
+---
+- name: Install Kafka and add to PATH
+  hosts: all
+
+  vars:
+    kafka_url: https://downloads.apache.org/kafka/4.2.0/kafka_2.13-4.2.0.tgz
+    kafka_archive: kafka_2.13-4.2.0.tgz
+
+  tasks:
+    - name: Install apt dependencies
+      become: true
+      ansible.builtin.apt:
+        name:
+          - default-jdk
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Create ~/kafka folder
+      ansible.builtin.file:
+        path: "{{ kafka }}"
+        state: directory
+        mode: "0700"
+
+    - name: Check if Kafka is already installed
+      ansible.builtin.stat:
+        path: "{{ kafka_install_dir }}"
+      register: kafka_installed
+
+    - name: Download Kafka archive
+      ansible.builtin.get_url:
+        url: "{{ kafka_url }}"
+        dest: "/tmp/{{ kafka_archive }}"
+        mode: "0700"
+      when: not kafka_installed.stat.exists
+
+    - name: Extract Kafka archive
+      ansible.builtin.unarchive:
+        src: "/tmp/{{ kafka_archive }}"
+        dest: "{{ kafka }}"
+        remote_src: true
+      when: not kafka_installed.stat.exists
+
+    - name: Add Kafka to PATH
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/profile.d/kafka.sh
+        content: 'export PATH={{ kafka_bin }}:"$PATH"'
+        mode: "0444"
+
+
+- name: Configure Kafka
+  hosts: all
+
+  vars:
+    kafka_cluster_id: "{{ kafka }}/cluster.id"
+    kafka_logs: "{{ kafka }}/logs"
+    kafka_config: /vagrant/kafka/server.properties
+
+    connect_config: /vagrant/kafka/connect/connect.properties
+    connect_s3_name: s3-sink
+    connect_s3_config: ./kafka/connect/s3.json
+
+  tasks:
+    - name: Check if cluster ID exists
+      ansible.builtin.stat:
+        path: "{{ kafka_cluster_id }}"
+      register: cluster_id_file
+
+    - name: Generate Kafka cluster ID if not exist
+      when: not cluster_id_file.stat.exists
+      block:
+        - name: Generate Kafka cluster ID
+          ansible.builtin.command: "{{ kafka_bin }}/kafka-storage.sh random-uuid"
+          register: kafka_uuid
+          changed_when: false
+
+        - name: Save cluster ID
+          ansible.builtin.copy:
+            content: "{{ kafka_uuid.stdout }}"
+            dest: "{{ kafka_cluster_id }}"
+            mode: "0444"
+
+    - name: Read existing cluster ID
+      ansible.builtin.command: "cat {{ kafka_cluster_id }}"
+      register: kafka_uuid
+      changed_when: false
+
+    - name: Configure Kafka broker
+      ansible.builtin.command: >
+        {{ kafka_bin }}/kafka-storage.sh format
+        --standalone
+        -t {{ kafka_uuid.stdout }}
+        -c {{ kafka_config }}
+      args:
+        creates: "{{ kafka_logs }}/meta.properties"
+
+    - name: Create Kafka systemd service
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/kafka.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Apache Kafka Server
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=vagrant
+          Group=vagrant
+
+          ExecStart={{ kafka_bin }}/kafka-server-start.sh {{ kafka_config }}
+          ExecStop={{ kafka_bin }}/kafka-server-stop.sh
+
+          Restart=on-failure
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd
+      become: true
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable and start Kafka
+      become: true
+      ansible.builtin.systemd:
+        name: kafka
+        enabled: true
+        state: started
+
+    - name: Ensure Kafka libs directory exists
+      ansible.builtin.file:
+        path: /home/vagrant/kafka/libs
+        state: directory
+        mode: '0755'
+
+    - name: Download Confluent S3 connector
+      ansible.builtin.get_url:
+        url: https://archives-761018874759.s3.eu-central-1.amazonaws.com/kafka/libs/confluentinc-kafka-connect-s3-12.1.5.zip
+        dest: /tmp/confluentinc-kafka-connect-s3-12.1.5.zip
+        mode: '0644'
+
+    - name: Unarchive Confluent S3 connector
+      ansible.builtin.unarchive:
+        src: /tmp/confluentinc-kafka-connect-s3-12.1.5.zip
+        dest: /home/vagrant/kafka/libs
+        remote_src: true
+        creates: /home/vagrant/kafka/libs/confluentinc-kafka-connect-s3-12.1.5
+
+    - name: Ensure .aws directory exists
+      ansible.builtin.file:
+        path: /home/vagrant/.aws
+        state: directory
+        owner: vagrant
+        group: vagrant
+        mode: '0700'
+
+    - name: Copy AWS credentials
+      ansible.builtin.copy:
+        src: ./.aws/credentials
+        dest: /home/vagrant/.aws/credentials
+        owner: vagrant
+        group: vagrant
+        mode: '0600'
+
+    - name: Create Kafka Connect systemd service
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/kafka-connect.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Apache Kafka Connect
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=vagrant
+          Group=vagrant
+
+          ExecStart={{ kafka_bin }}/connect-distributed.sh {{ connect_config }}
+          ExecStop=/bin/kill $MAINPID
+
+          Restart=on-failure
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd
+      become: true
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable and start Kafka Connect
+      become: true
+      ansible.builtin.systemd:
+        name: kafka-connect
+        enabled: true
+        state: restarted
+
+    - name: Wait for Kafka Connect REST API
+      ansible.builtin.uri:
+        url: http://localhost:8083/connectors
+        method: GET
+        status_code: 200
+      register: connect_result
+      retries: 5
+      delay: 5
+      until: connect_result.status == 200
+
+    - name: Check if S3 connector already exists
+      ansible.builtin.uri:
+        url: http://localhost:8083/connectors/{{ connect_s3_name }}
+        method: GET
+        status_code:
+          - 200
+          - 404
+      register: s3_connector
+
+    - name: Create S3 connector
+      when: s3_connector.status == 404
+      ansible.builtin.uri:
+        url: http://localhost:8083/connectors
+        method: POST
+        body_format: json
+        body: "{{ lookup('file', connect_s3_config) }}"
+        headers:
+          Content-Type: application/json
+        status_code:
+          - 200
+          - 201
+
+    - name: Update S3 connector config
+      ansible.builtin.uri:
+        url: "http://localhost:8083/connectors/{{ connect_s3_name }}/config"
+        method: PUT
+        body_format: json
+        body: >-
+          {{
+            lookup('file', connect_s3_config)
+            | from_json
+            | json_query('config')
+          }}
+        headers:
+          Content-Type: application/json
+        status_code: 200

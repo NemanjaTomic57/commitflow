@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 
@@ -13,12 +12,12 @@ import (
 func NewProducer() *kafka.Producer {
 	bootstrapServer := os.Getenv("KAFKA_BOOTSTRAP_SERVER")
 	if bootstrapServer == "" {
-		log.Fatal("KAFKA_BOOTSTRAP_SERVER is not set")
+		log.Fatalln("kafka.NewProducer() -> KAFKA_BOOTSTRAP_SERVER is not set")
 	}
 
 	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": bootstrapServer})
 	if err != nil {
-		log.Fatal("main() -> error creating Kafka producer: ", err)
+		log.Fatalln("kafka.NewProducer() -> error creating Kafka producer: %w", err)
 	}
 
 	return p
@@ -29,7 +28,7 @@ func ProduceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte,
 
 	err := json.Unmarshal(resp, &object)
 	if err != nil {
-		log.Fatal("produceKafkaEvents() -> error unmarshalling JSON:", err)
+		log.Println("ProduceKafkaEvents() -> error unmarshalling JSON: %w", err)
 	}
 
 	// Get results back from producing to Kafka and print to console
@@ -38,9 +37,9 @@ func ProduceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte,
 			switch ev := e.(type) {
 			case *kafka.Message:
 				if ev.TopicPartition.Error != nil {
-					fmt.Printf("produceKafkaEvents() -> delivery failed %v\n", ev.TopicPartition)
+					log.Println("ProduceKafkaEvents() -> delivery failed:", ev.TopicPartition)
 				} else {
-					fmt.Printf("produceKafkaEvents() -> delivered message to %v\n", ev.TopicPartition)
+					log.Println("ProduceKafkaEvents() -> delivered message to:", ev.TopicPartition)
 				}
 			}
 		}
@@ -50,7 +49,7 @@ func ProduceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte,
 	for _, project := range object {
 		projectBytes, err := json.Marshal(project)
 		if err != nil {
-			log.Println("produceKafkaEvents() -> error marshalling project:", err)
+			log.Printf("ProduceKafkaEvents() -> error marshalling project: %v", err)
 			continue
 		}
 
@@ -59,7 +58,7 @@ func ProduceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte,
 			Value:          projectBytes,
 		}, nil)
 		if err != nil {
-			log.Println("produceKafkaEvents() -> error producing message:", err)
+			log.Println("ProduceKafkaEvents() -> error producing message:", err)
 		}
 	}
 }

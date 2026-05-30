@@ -2,6 +2,7 @@ package gitlab
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -53,16 +54,41 @@ type GitAPIResponse interface {
 
 var baseURL = "https://gitlab.com/api/v4"
 
-func FetchAPI(url string) *http.Response {
+func GetAllCommits(resp chan []byte) {
+	// Fetch all project IDs
+	projectIDs := fetchProjectIDs()
+
+	// Interate through project IDs and fetch commits for each project
+	for _, id := range projectIDs {
+		url := fmt.Sprintf("%s/projects/%d/repository/commits", baseURL, id)
+		fetchAPI(url, resp)
+	}
+
+	// Close channel when done
+	close(resp)
+}
+
+func fetchAPI(url string, resp chan []byte) {
+	// Iterate as long as there is an URL
+	for url != "" {
+		httpResponse := makeRequest(url)
+		// Get the next link from the paginated result
+		url = getNextLink(httpResponse)
+		resp <- utils.ExtractBodyFromResponse(httpResponse)
+		httpResponse.Body.Close()
+	}
+}
+
+func makeRequest(url string) *http.Response {
 	gitlabPAT := os.Getenv("GITLAB_PAT")
 	if gitlabPAT == "" {
-		log.Fatal("GITLAB_PAT is not set")
+		log.Fatalln("GITLAB_PAT is not set")
 	}
 
 	// Create the HTTP request
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Fatal("fetchGitlabAPI() -> error creating the request:", err)
+		log.Println("gitlab.makeRequest() -> error creating the request: %w", err)
 	}
 
 	req.Header.Add("PRIVATE-TOKEN", gitlabPAT)
@@ -74,19 +100,20 @@ func FetchAPI(url string) *http.Response {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("fetchGitlabAPI() -> error sending the request:", err)
+		log.Println("gitlab.makeRequest() -> error sending the request:", err)
+	}
+
+	// Check status code
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("gitlab.makeRequest() -> request status code error: %s with URL: %s", resp.Status, url)
 	}
 
 	return resp
 }
 
-func GetNextLink(resp *http.Response) string {
-	// Extract the next link from pagination
+// Extracts the next link from paginated http response
+func getNextLink(resp *http.Response) string {
 	linkHeader := resp.Header.Get("Link")
-
-	if linkHeader == "" {
-		return ""
-	}
 
 	for link := range strings.SplitSeq(linkHeader, ",") {
 		parts := strings.Split(link, ";")
@@ -106,22 +133,29 @@ func GetNextLink(resp *http.Response) string {
 	return ""
 }
 
-func FetchProjectIDs() []int {
+func fetchProjectIDs() []int {
+	var resp = make(chan []byte)
+	url := baseURL + "/projects?owned=true&per_page=1"
+
+	// Fetch all projects and close channel when done
+	go func() {
+		fetchAPI(url, resp)
+		close(resp)
+	}()
+
 	var projects []GitlabProject
 	var projectIDs []int
-	url := baseURL + "/projects?owned=true"
 
-	for url != "" {
-		resp := FetchAPI(url)
-		url = GetNextLink(resp)
-		body := utils.ExtractBodyFromResponse(resp)
-		resp.Body.Close()
+	for r := range resp {
+		// Unmarshal the paginated responses into objects
+		json.Unmarshal(r, &projects)
 
-		json.Unmarshal(body, &projects)
+		// Extract the IDs for each project in the resoponse
 		for _, project := range projects {
 			projectIDs = append(projectIDs, project.ID)
 		}
 	}
 
+	// Return the project IDs
 	return projectIDs
 }

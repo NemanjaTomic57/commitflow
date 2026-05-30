@@ -13,10 +13,5 @@ func ExtractBodyFromResponse(resp *http.Response) []byte {
 		log.Fatal("extractBodyFromResponse() -> error reading response body:", err)
 	}
 
-	// Check status code
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("extractBodyFromResponse() -> request status code error: %s\n%s", resp.Status, string(body))
-	}
-
 	return body
 }

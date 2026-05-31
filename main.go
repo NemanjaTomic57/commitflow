@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/NemanjaTomic57/commitflow/internal/aws"
+	"github.com/NemanjaTomic57/commitflow/internal/kafka"
 	"github.com/joho/godotenv"
 )
 
@@ -26,9 +26,8 @@ func main() {
 			log.Fatal(err)
 		}
 
-		// kafka.Bootstrap()
-		os.Exit(0)
+		kafka.Bootstrap()
 	}
 
-	fmt.Println("Nothing to do.")
+	fmt.Println("TODO: Implement cronjobs for API requests to Git")
 }

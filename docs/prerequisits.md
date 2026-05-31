@@ -14,7 +14,7 @@ First, git pull the project.
 
 ## AWS IAM
 
-Before we provision the virtual machine with Vagrant, we first have to add the credentials for the S3 bucket into /vagrant/.aws/credentials.
+Before we provision the virtual machine with Vagrant, we first have to add the credentials for the S3 bucket into the .env file.
 
 For this, follow the following steps:
 
@@ -57,7 +57,13 @@ For this, follow the following steps:
 
 Don't forget to fill in the placeholder for the bucket name in the policy.
 
-## GitLab Personal Access Token
+After you created the bucket and the IAM user with the access keys, copy the access keys as well as the bucket name into the .env file. You can use the template at .env.example.
+
+This bucket will be used to sink the data from Git to S3. The IAM access keys will be used by the Kafka Connect S3 Sink plugin to connect and upload the data to JSON objects.
+
+The costs for uploading and storing the data in S3 depend on the size of your Git accounts, based on how many projects you **own**. Projects you maintain but do not own are not being considered and no data will be fetched for those projects.
+
+## GitHub and GitLab Personal Access Token
 
 We also need a personal access token for GitLab and GitHub APIs. Create them in your account and add them to the project by copying the environment file example and filling out the placeholders.
 
@@ -68,10 +74,8 @@ The personal access token needs the API permissions.
 Before we can provision the VM, we first have to fill out a few placeholder variables in the following files.
 
 - /.env
-- /vagrant/.aws/credentials
-- /vagrant/kafka/connect/s3.json
 
-To run this application, first create and provision the virtual machine for Kafka.
+To run the application, first create and provision the virtual machine for Kafka.
 
 ```bash
 cd vagrant
@@ -81,4 +85,4 @@ ansible-playbook -i hosts playbook.yml
 
 This will start the Kafka broker on a virtual machine.
 
-You can automate the provisioning of the AWS credentials and the virtual machine by running the `provision.sh` script in the project root. This will then ask you for the bucket name, access key id, secret access key and then fill out all the placeholders with the sed CLI tool.
+You can automate the provisioning of the environemnt variables and the virtual machine by running the `provision.sh` script in the project root.

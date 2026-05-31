@@ -9,7 +9,7 @@
     "s3.bucket.name": "<S3_BUCKET_NAME>",
     "s3.part.size": "5242880",
 
-    "flush.size": "10",
+    "flush.size": "3",
     "rotate.schedule.interval.ms": "300000",
     "timezone": "UTC",
 

@@ -4,30 +4,15 @@
 
 The project explores how modern event-driven systems are built end-to-end with Apache Kafka — from ingesting external API data to processing, storage, and visualization.
 
-## Overview
-
-This project is designed as a hands-on deep dive into the Kafka ecosystem and surrounding infrastructure.
-
-Instead of building a toy example, CommitFlow implements a realistic streaming pipeline that collects development activity from platforms like GitHub and GitLab, processes it through Kafka, and delivers insights through analytics and dashboards.
-
 The central question driving this project is:
 
 > **How can scalable, production-ready data streaming systems be implemented with Kafka from end to end?**
 
+CommitFlow implements a realistic streaming pipeline that collects development activity from GitHub and GitLab, processes it through Kafka, and delivers insights through analytics and dashboards.
+
 ## Architecture Goals
 
-The project focuses on understanding how Kafka integrates with:
-
-- External APIs and event sources
-- Producers and consumers
-- Kafka Connect
-- Object storage systems
-- Monitoring and observability tooling
-- Infrastructure automation and deployment workflows
-
 The goal is not only to use Kafka, but to understand how distributed streaming systems are designed, deployed, and operated in production environments.
-
-## Planned Features
 
 ### Infrastructure & Deployment
 
@@ -48,11 +33,11 @@ The goal is not only to use Kafka, but to understand how distributed streaming s
 
 - Design topic structures for scalable event processing
 - Use **Kafka Connect** for data integration
-- Sink streamed data into **Amazon S3-compatible storage**
+- Sink streamed data into **AWS S3** and **PostgreSQL**
 
 ### Monitoring & Analytics
 
-- Collect operational metrics
+- Collect operational metrics with the collected data from Git
 - Visualize pipeline health and engineering insights with **Grafana**
 - Monitor Kafka infrastructure and throughput
 
@@ -71,7 +56,7 @@ This setup allows rapid experimentation and local testing.
 
 ### Production
 
-The production environment will be deployed on **Hetzner Cloud** using Terraform and Ansible for infrastructure automation.
+The production environment will be deployed on **AWS** using Terraform and Ansible for infrastructure automation.
 
 The long-term goal is to create a reproducible and scalable streaming platform suitable for real-world workloads.
 
@@ -84,8 +69,7 @@ The long-term goal is to create a reproducible and scalable streaming platform s
 - **Terraform**
 - **Ansible**
 - **Grafana**
-- **Amazon S3-compatible storage**
-- **Hetzner Cloud**
+- **AWS**
 
 ## Learning Objectives
 

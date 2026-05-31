@@ -74,7 +74,7 @@ func fetchAPI(url string, resp chan []byte) {
 		httpResponse := makeRequest(url)
 		// Get the next link from the paginated result
 		url = getNextLink(httpResponse)
-		resp <- utils.ExtractBodyFromResponse(httpResponse)
+		resp <- utils.ExtractBodyFromHTTPResponse(httpResponse)
 		httpResponse.Body.Close()
 	}
 }

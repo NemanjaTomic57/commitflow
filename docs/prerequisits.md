@@ -10,6 +10,7 @@ First, git pull the project.
 - Install Golang
 - S3 bucket in AWS
 - AWS IAM user with permissions to the bucket
+- GitHub Personal Access Token
 - GitLab Personal Access Token
 
 ## AWS IAM
@@ -24,34 +25,35 @@ For this, follow the following steps:
 
 ```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListAllMyBuckets"
-            ],
-            "Resource": "arn:aws:s3:::*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListBucket",
-                "s3:GetBucketLocation"
-            ],
-            "Resource": "arn:aws:s3:::<S3_BUCKET_NAME>"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:PutObject",
-                "s3:GetObject",
-                "s3:AbortMultipartUpload",
-                "s3:PutObjectTagging"
-            ],
-            "Resource": "arn:aws:s3:::<S3_BUCKET_NAME>/*"
-        }
-    ]
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:ListAllMyBuckets"
+			],
+			"Resource": "arn:aws:s3:::*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:ListBucket",
+				"s3:GetBucketLocation"
+			],
+			"Resource": "arn:aws:s3:::<S3_BUCKET_NAME>"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:PutObject",
+				"s3:GetObject",
+				"s3:DeleteObject",
+				"s3:AbortMultipartUpload",
+				"s3:PutObjectTagging"
+			],
+			"Resource": "arn:aws:s3:::<S3_BUCKET_NAME>/*"
+		}
+	]
 }
 ```
 
@@ -67,7 +69,14 @@ The costs for uploading and storing the data in S3 depend on the size of your Gi
 
 We also need a personal access token for GitLab and GitHub APIs. Create them in your account and add them to the project by copying the environment file example and filling out the placeholders.
 
-The personal access token needs the API permissions.
+GitLab PAT permissions need to include:
+
+- api
+
+GitHub PAT (classic) permsissions need to include:
+
+- repo
+
 
 ## Provision the VM with Vagrant
 

@@ -9,26 +9,42 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func NewProducer() *kafka.Producer {
+var topic = "git.commits"
+var messages = make(chan []byte)
+
+func Bootstrap() {
+	go gitlab.GetAllCommits(messages)
+
+	producer := newProducer()
+	defer producer.Close()
+
+	for message := range messages {
+		produceKafkaEvents[gitlab.GitlabCommit](producer, message, topic)
+	}
+
+	producer.Flush(15 * 1000)
+}
+
+func newProducer() *kafka.Producer {
 	bootstrapServer := os.Getenv("KAFKA_BOOTSTRAP_SERVER")
 	if bootstrapServer == "" {
-		log.Fatalln("kafka.NewProducer() -> KAFKA_BOOTSTRAP_SERVER is not set")
+		log.Fatalln("kafka.newProducer() -> KAFKA_BOOTSTRAP_SERVER is not set")
 	}
 
 	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": bootstrapServer})
 	if err != nil {
-		log.Fatalln("kafka.NewProducer() -> error creating Kafka producer: %w", err)
+		log.Fatalln("kafka.newProducer() -> error creating Kafka producer: %w", err)
 	}
 
 	return p
 }
 
-func ProduceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte, topic string) {
+func produceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte, topic string) {
 	var object []T
 
 	err := json.Unmarshal(resp, &object)
 	if err != nil {
-		log.Println("ProduceKafkaEvents() -> error unmarshalling JSON: %w", err)
+		log.Println("produceKafkaEvents() -> error unmarshalling JSON: %w", err)
 	}
 
 	// Get results back from producing to Kafka and print to console
@@ -37,9 +53,9 @@ func ProduceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte,
 			switch ev := e.(type) {
 			case *kafka.Message:
 				if ev.TopicPartition.Error != nil {
-					log.Println("ProduceKafkaEvents() -> delivery failed:", ev.TopicPartition)
+					log.Println("produceKafkaEvents() -> delivery failed:", ev.TopicPartition)
 				} else {
-					log.Println("ProduceKafkaEvents() -> delivered message to:", ev.TopicPartition)
+					log.Println("produceKafkaEvents() -> delivered message to:", ev.TopicPartition)
 				}
 			}
 		}
@@ -49,7 +65,7 @@ func ProduceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte,
 	for _, project := range object {
 		projectBytes, err := json.Marshal(project)
 		if err != nil {
-			log.Printf("ProduceKafkaEvents() -> error marshalling project: %v", err)
+			log.Printf("produceKafkaEvents() -> error marshalling project: %v", err)
 			continue
 		}
 
@@ -58,7 +74,7 @@ func ProduceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte,
 			Value:          projectBytes,
 		}, nil)
 		if err != nil {
-			log.Println("ProduceKafkaEvents() -> error producing message:", err)
+			log.Println("produceKafkaEvents() -> error producing message:", err)
 		}
 	}
 }

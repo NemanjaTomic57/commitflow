@@ -1,6 +1,6 @@
 # CommitFlow
 
-**CommitFlow** transforms Git events into actionable engineering intelligence using Kafka-powered streaming and cloud-native analytics.
+**CommitFlow** implements a realistic streaming pipeline that collects development activity from GitHub and GitLab, processes it through Kafka, and delivers insights through analytics and dashboards.
 
 The project explores how modern event-driven systems are built end-to-end with Apache Kafka — from ingesting external API data to processing, storage, and visualization.
 
@@ -8,11 +8,9 @@ The central question driving this project is:
 
 > **How can scalable, production-ready data streaming systems be implemented with Kafka from end to end?**
 
-CommitFlow implements a realistic streaming pipeline that collects development activity from GitHub and GitLab, processes it through Kafka, and delivers insights through analytics and dashboards.
+The goal is not only to use Kafka, but to understand how distributed streaming systems are designed, deployed, and operated in production environments.
 
 ## Architecture Goals
-
-The goal is not only to use Kafka, but to understand how distributed streaming systems are designed, deployed, and operated in production environments.
 
 ### Infrastructure & Deployment
 

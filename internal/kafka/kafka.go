@@ -9,14 +9,15 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-var topic = "git.commits"
-var messages = make(chan []byte)
-
 func Bootstrap() {
+	messages := make(chan []byte)
+
 	go gitlab.GetAllCommits(messages)
 
 	producer := newProducer()
 	defer producer.Close()
+
+	topic := "git.commits"
 
 	for message := range messages {
 		produceKafkaEvents[gitlab.GitlabCommit](producer, message, topic)

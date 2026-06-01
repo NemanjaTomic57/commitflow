@@ -9,6 +9,6 @@ import (
 type Provider interface {
 	GetAllCommits(chan kafka.GitCommit)
 	fetchProjectIDs() []int
-	makeRequest(url string) *http.Response
+	executeRequest(url string) *http.Response
 	getNextLink(resp *http.Response) string
 }

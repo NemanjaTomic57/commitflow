@@ -9,10 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/NemanjaTomic57/commitflow/internal/kafka"
 	"github.com/NemanjaTomic57/commitflow/internal/utils"
 )
 
-type GitlabProjectNamespace struct {
+type gitlabProjectNamespace struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Path     string `json:"path"`
@@ -21,16 +22,16 @@ type GitlabProjectNamespace struct {
 	WebURL   string `json:"web_url"`
 }
 
-type GitlabProject struct {
+type gitlabProject struct {
 	ID                     int                    `json:"id"`
 	Description            string                 `json:"description"`
 	PathWithNamespace      string                 `json:"path_with_namespace"`
 	CreatedAt              string                 `json:"created_at"`
 	WebURL                 string                 `json:"web_url"`
-	GitlabProjectNamespace GitlabProjectNamespace `json:"namespace"`
+	GitlabProjectNamespace gitlabProjectNamespace `json:"namespace"`
 }
 
-type GitlabCommit struct {
+type gitlabCommit struct {
 	ID               string              `json:"id"`
 	ShortID          string              `json:"short_id"`
 	CreatedAt        time.Time           `json:"created_at"`
@@ -48,32 +49,52 @@ type GitlabCommit struct {
 	WebURL           string              `json:"web_url"`
 }
 
-type GitAPIResponse interface {
-	GitlabProject | GitlabCommit
+type gitlabAPIResponse interface {
+	gitlabCommit | gitlabProject
 }
 
 var baseURL = "https://gitlab.com/api/v4"
 
-func GetAllCommits(resp chan []byte) {
+func GetAllCommits(messages chan kafka.GitCommit) {
+	defer close(messages)
+
 	// Fetch all project IDs
 	projectIDs := fetchProjectIDs()
 
 	// Interate through project IDs and fetch commits for each project
 	for _, id := range projectIDs {
-		url := fmt.Sprintf("%s/projects/%d/repository/commits", baseURL, id)
-		fetchAPI(url, resp)
-	}
+		var resp = make(chan []byte)
 
-	// Close channel when done
-	close(resp)
+		url := fmt.Sprintf("%s/projects/%d/repository/commits", baseURL, id)
+		go fetchAPI(url, resp)
+
+		for r := range resp {
+			var gitlabCommits []gitlabCommit
+			err := json.Unmarshal(r, &gitlabCommits)
+			if err != nil {
+				log.Printf("gitlab.GetAllCommits() -> error at unmarshalling response to gitlabCommit: %v", err)
+			}
+
+			for _, c := range gitlabCommits {
+				message := c.ToGitCommit()
+				messages <- message
+			}
+		}
+	}
 }
 
 func fetchAPI(url string, resp chan []byte) {
+	defer close(resp)
+
 	// Iterate as long as there is an URL
 	for url != "" {
+		// Make the API request with the current page
 		httpResponse := makeRequest(url)
+
 		// Get the next link from the paginated result
 		url = getNextLink(httpResponse)
+
+		// Send []byte of http response to the channel
 		resp <- utils.ExtractBodyFromHTTPResponse(httpResponse)
 		httpResponse.Body.Close()
 	}
@@ -88,7 +109,7 @@ func makeRequest(url string) *http.Response {
 	// Create the HTTP request
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Println("gitlab.makeRequest() -> error creating the request: %w", err)
+		log.Printf("gitlab.makeRequest() -> error creating the request: %v", err)
 	}
 
 	req.Header.Add("PRIVATE-TOKEN", gitlabPAT)
@@ -100,12 +121,14 @@ func makeRequest(url string) *http.Response {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("gitlab.makeRequest() -> error sending the request:", err)
+		log.Printf("gitlab.makeRequest() -> error sending the request: %v", err)
+		return nil
 	}
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("gitlab.makeRequest() -> request status code error: %s with URL: %s", resp.Status, url)
+		return nil
 	}
 
 	return resp
@@ -137,13 +160,10 @@ func fetchProjectIDs() []int {
 	var resp = make(chan []byte)
 	url := baseURL + "/projects?owned=true&per_page=1"
 
-	// Fetch all projects and close channel when done
-	go func() {
-		fetchAPI(url, resp)
-		close(resp)
-	}()
+	// Fetch all projects
+	go fetchAPI(url, resp)
 
-	var projects []GitlabProject
+	var projects []gitlabProject
 	var projectIDs []int
 
 	for r := range resp {

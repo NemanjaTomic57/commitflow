@@ -2,13 +2,22 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/NemanjaTomic57/commitflow/internal/aws"
-	"github.com/NemanjaTomic57/commitflow/internal/gitlab"
 	"github.com/NemanjaTomic57/commitflow/internal/kafka"
+	"github.com/NemanjaTomic57/commitflow/internal/providers/gitlab"
 	"github.com/joho/godotenv"
 )
+
+// Creates the GitHub base URL with the variable username
+func baseURL() string {
+	owner := os.Getenv("GITHUB_USERNAME")
+	baseURL := fmt.Sprintf("https://api.github.com/repos/%s", owner)
+	return baseURL
+}
 
 func bootstrap() {
 	messages := make(chan kafka.GitCommit)

@@ -7,11 +7,14 @@ First, git pull the project.
 - Install Virtualbox
 - Install Vagrant
 - Install Ansible
+- pip install jmespath
 - Install Golang
 - S3 bucket in AWS
 - AWS IAM user with permissions to the bucket
 - GitHub Personal Access Token
 - GitLab Personal Access Token
+
+Ansible requires you to install 
 
 ## AWS IAM
 
@@ -95,3 +98,13 @@ ansible-playbook -i hosts playbook.yml
 This will start the Kafka broker on a virtual machine.
 
 You can automate the provisioning of the environemnt variables and the virtual machine by running the `provision.sh` script in the project root.
+
+## Grafana Dashboard
+
+The Grafana dashboard is available under http://192.168.56.10:3000.
+
+Default credentials:
+username: admin
+password: admin
+
+You have to change the password at first login.

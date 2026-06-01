@@ -4,78 +4,71 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"time"
 
-	"github.com/NemanjaTomic57/commitflow/internal/gitlab"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func Bootstrap() {
-	messages := make(chan []byte)
-
-	go gitlab.GetAllCommits(messages)
-
-	producer := newProducer()
-	defer producer.Close()
-
-	topic := "git.commits"
-
-	for message := range messages {
-		produceKafkaEvents[gitlab.GitlabCommit](producer, message, topic)
-	}
-
-	producer.Flush(15 * 1000)
+type GitCommit struct {
+	ID          string    `json:"id"`
+	AuthorName  string    `json:"author_name"`
+	AuthorEmail string    `json:"author_email"`
+	Message     string    `json:"message"`
+	CreatedAt   time.Time `json:"created_at"`
+	URL         string    `json:"url"`
+	Provider    string    `json:"provider"`
 }
 
-func newProducer() *kafka.Producer {
+// NOTE: This is a placeholder
+type GitProject struct {
+	ID   string `json:"id"`
+	Test string `json:"test"`
+}
+
+type GitAPIResponse interface {
+	GitCommit | GitProject
+}
+
+func NewProducer() *kafka.Producer {
 	bootstrapServer := os.Getenv("KAFKA_BOOTSTRAP_SERVER")
 	if bootstrapServer == "" {
-		log.Fatalln("kafka.newProducer() -> KAFKA_BOOTSTRAP_SERVER is not set")
+		log.Fatalln("kafka.NewProducer() -> KAFKA_BOOTSTRAP_SERVER is not set")
 	}
 
 	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": bootstrapServer})
 	if err != nil {
-		log.Fatalln("kafka.newProducer() -> error creating Kafka producer: %w", err)
+		log.Fatalln("kafka.NewProducer() -> error creating Kafka producer: %w", err)
 	}
 
 	return p
 }
 
-func produceKafkaEvents[T gitlab.GitAPIResponse](p *kafka.Producer, resp []byte, topic string) {
-	var object []T
-
-	err := json.Unmarshal(resp, &object)
-	if err != nil {
-		log.Println("produceKafkaEvents() -> error unmarshalling JSON: %w", err)
-	}
-
+func ProduceKafkaEvents[T GitAPIResponse](p *kafka.Producer, message T, topic string) {
 	// Get results back from producing to Kafka and print to console
 	go func() {
 		for e := range p.Events() {
 			switch ev := e.(type) {
 			case *kafka.Message:
 				if ev.TopicPartition.Error != nil {
-					log.Println("produceKafkaEvents() -> delivery failed:", ev.TopicPartition)
+					log.Println("ProduceKafkaEvents() -> delivery failed:", ev.TopicPartition)
 				} else {
-					log.Println("produceKafkaEvents() -> delivered message to:", ev.TopicPartition)
+					log.Println("ProduceKafkaEvents() -> delivered message to:", ev.TopicPartition)
 				}
 			}
 		}
 	}()
 
 	// Produce to Kafka topic
-	for _, project := range object {
-		projectBytes, err := json.Marshal(project)
-		if err != nil {
-			log.Printf("produceKafkaEvents() -> error marshalling project: %v", err)
-			continue
-		}
+	messageBytes, err := json.Marshal(message)
+	if err != nil {
+		log.Printf("ProduceKafkaEvents() -> error marshalling project: %v", err)
+	}
 
-		err = p.Produce(&kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-			Value:          projectBytes,
-		}, nil)
-		if err != nil {
-			log.Println("produceKafkaEvents() -> error producing message:", err)
-		}
+	err = p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          messageBytes,
+	}, nil)
+	if err != nil {
+		log.Println("ProduceKafkaEvents() -> error producing message:", err)
 	}
 }

@@ -15,16 +15,16 @@ import (
 
 var baseURL = "https://gitlab.com/api/v4"
 
-// Get all commits for every project.
+// Get all commits for all projects.
 func GetAllCommits(messages chan kafka.GitCommit) {
 	defer close(messages)
 
 	// Fetch all project IDs
-	projectIDs := fetchProjectIDs()
+	projects := fetchAllProjects()
 
 	// Interate through project IDs and fetch commits for each project
-	for _, id := range projectIDs {
-		url := fmt.Sprintf("%s/projects/%d/repository/commits", baseURL, id)
+	for _, project := range projects {
+		url := fmt.Sprintf("%s/projects/%d/repository/commits", baseURL, project.ID)
 		commits := fetchAPI[commit](url)
 
 		for _, commit := range commits {
@@ -34,21 +34,10 @@ func GetAllCommits(messages chan kafka.GitCommit) {
 	}
 }
 
-// Fetches the project IDs from the current user.
-func fetchProjectIDs() []int {
-	url := baseURL + "/projects?owned=true&per_page=1"
-
-	// Fetch all projects
-	projects := fetchAPI[project](url)
-
-	// Extract the IDs for each project in the resoponse
-	var projectIDs []int
-	for _, project := range projects {
-		projectIDs = append(projectIDs, project.ID)
-	}
-
-	// Return the project IDs
-	return projectIDs
+// Fetches all projects for the authenticated user.
+func fetchAllProjects() []project {
+	url := baseURL + "/projects?membership=true&per_page=1"
+	return fetchAPI[project](url)
 }
 
 // Fetches the API endpoint and returns JSON array. If the response is

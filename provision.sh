@@ -54,11 +54,11 @@ fi
 # GITHUB PERSONAL ACCESS TOKEN
 #################################################
 
-if [[ "${GITHUB_PAT:-}" != "" && "${GITHUB_USERNAME:-}" != "" ]]; then
-  echo "Using GITHUB_PAT and GITHUB_USERNAME from $ENV_FILE"
+if [[ "${GITHUB_PAT:-}" != "" ]]; then
+  echo "Using GITHUB_PAT from $ENV_FILE"
 else
   echo
-  echo "ERROR: GitHub variables not set in .env"
+  echo "ERROR: GitHub Personal Access Token not set in .env"
   env_err
 fi
 

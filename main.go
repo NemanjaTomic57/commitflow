@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"log"
+	"sync"
 
 	"github.com/NemanjaTomic57/commitflow/internal/aws"
+	"github.com/NemanjaTomic57/commitflow/internal/github"
 	"github.com/NemanjaTomic57/commitflow/internal/gitlab"
 	"github.com/NemanjaTomic57/commitflow/internal/kafka"
 	"github.com/joho/godotenv"
@@ -12,9 +14,20 @@ import (
 
 func bootstrap() {
 	messages := make(chan kafka.GitCommit)
+	var wg sync.WaitGroup
 
-	go gitlab.GetAllCommits(messages)
-	// go github.GetAllCommits(messages)
+	wg.Go(func() {
+		gitlab.GetAllCommits(messages)
+	})
+
+	wg.Go(func() {
+		github.GetAllCommits(messages)
+	})
+
+	go func() {
+		wg.Wait()
+		close(messages)
+	}()
 
 	producer := kafka.NewProducer()
 	defer producer.Close()

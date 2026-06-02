@@ -3,7 +3,7 @@
   "config": {
     "connector.class": "io.confluent.connect.s3.S3SinkConnector",
     "tasks.max": "1",
-    "topics": "git.projects,git.commits",
+    "topics": "git.commits",
 
     "s3.region": "eu-central-1",
     "s3.bucket.name": "git-logs-761018874759",

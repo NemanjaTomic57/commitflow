@@ -17,8 +17,6 @@ var baseURL = "https://gitlab.com/api/v4"
 
 // Get all commits for all projects.
 func GetAllCommits(messages chan kafka.GitCommit) {
-	defer close(messages)
-
 	// Fetch all project IDs
 	projects := fetchAllProjects()
 

@@ -17,8 +17,6 @@ var baseURL = "https://api.github.com"
 
 // Get all commits for every project.
 func GetAllCommits(messages chan kafka.GitCommit) {
-	defer close(messages)
-
 	// Fetch all project IDs
 	repositories := fetchAllProjects()
 

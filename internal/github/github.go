@@ -20,7 +20,7 @@ func GetAllCommits(messages chan kafka.GitCommit) {
 	defer close(messages)
 
 	// Fetch all project IDs
-	repositories := fetchProjectNames()
+	repositories := fetchAllProjects()
 
 	// Interate through project IDs and fetch commits for each project
 	for _, repo := range repositories {
@@ -34,8 +34,8 @@ func GetAllCommits(messages chan kafka.GitCommit) {
 	}
 }
 
-// Fetches the project IDs from the current user.
-func fetchProjectNames() []repository {
+// Fetches all projects for the authenticated user.
+func fetchAllProjects() []repository {
 	url := baseURL + "/user/repos?per_page=4"
 	return fetchAPI[repository](url)
 }

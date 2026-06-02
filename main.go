@@ -14,6 +14,7 @@ func bootstrap() {
 	messages := make(chan kafka.GitCommit)
 
 	go gitlab.GetAllCommits(messages)
+	// go github.GetAllCommits(messages)
 
 	producer := kafka.NewProducer()
 	defer producer.Close()

@@ -3,7 +3,7 @@
   hosts: all
 
   vars:
-    kafka_url: https://downloads.apache.org/kafka/4.2.0/kafka_2.13-4.2.0.tgz
+    kafka_url: https://archives-761018874759.s3.eu-central-1.amazonaws.com/kafka/kafka_2.13-4.2.0.tgz
     kafka_archive: kafka_2.13-4.2.0.tgz
 
   tasks:
@@ -137,13 +137,13 @@
         state: directory
         mode: '0755'
 
-    - name: Download Confluent S3 connector
+    - name: Download Confluent S3 sink connector
       ansible.builtin.get_url:
         url: https://archives-761018874759.s3.eu-central-1.amazonaws.com/kafka/libs/confluentinc-kafka-connect-s3-12.1.5.zip
         dest: /tmp/confluentinc-kafka-connect-s3-12.1.5.zip
         mode: '0644'
 
-    - name: Unarchive Confluent S3 connector
+    - name: Unarchive Confluent S3 sink connector
       ansible.builtin.unarchive:
         src: /tmp/confluentinc-kafka-connect-s3-12.1.5.zip
         dest: /home/vagrant/kafka/libs
@@ -165,6 +165,19 @@
         owner: vagrant
         group: vagrant
         mode: '0600'
+
+    - name: Download Debezium JDBC sink connector
+      ansible.builtin.get_url:
+        url: https://archives-761018874759.s3.eu-central-1.amazonaws.com/kafka/libs/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
+        dest: /tmp/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
+        mode: '0644'
+
+    - name: Unarchive Debezium JDBC sink connector
+      ansible.builtin.unarchive:
+        src: /tmp/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
+        dest: /home/vagrant/kafka/libs
+        remote_src: true
+        creates: /home/vagrant/kafka/libs/debezium-connector-jdbc-3.5.2.Final-plugin
 
     - name: Create Kafka Connect systemd service
       become: true

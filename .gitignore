@@ -1,6 +1,5 @@
 # Secret variables
 .env
-**/.aws/credentials
 
 # Vagrant files
 .vagrant/

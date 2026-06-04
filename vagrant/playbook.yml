@@ -3,26 +3,33 @@
   hosts: all
 
   vars:
-    kafka_url: https://archives-761018874759.s3.eu-central-1.amazonaws.com/kafka/kafka_2.13-4.2.0.tgz
-    kafka_archive: kafka_2.13-4.2.0.tgz
+    kafka_url: https://www.apache.org/dyn/closer.lua/kafka/4.3.0/kafka_2.13-4.3.0.tgz?action=download
+    kafka_archive: kafka_2.13-4.3.0.tgz
 
   tasks:
-    - name: Install apt dependencies
+    - name: Install dependencies
       become: true
-      ansible.builtin.apt:
+      ansible.builtin.dnf:
         name:
-          - default-jdk
+          - java-21-openjdk-devel
           - unzip
-        update_cache: true
-        cache_valid_time: 3600
+          - tar
+          - wget
+          - rsync
+          - net-tools
+          - jq
+        state: present
 
-    - name: Create ~/kafka folder
+    - name: Create Kafka directory
+      become: true
       ansible.builtin.file:
         path: "{{ kafka }}"
         state: directory
         mode: "0700"
+        owner: vagrant
+        group: vagrant
 
-    - name: Check if Kafka is already installed
+    - name: Check if Kafka is installed
       ansible.builtin.stat:
         path: "{{ kafka_install_dir }}"
       register: kafka_installed
@@ -31,7 +38,7 @@
       ansible.builtin.get_url:
         url: "{{ kafka_url }}"
         dest: "/tmp/{{ kafka_archive }}"
-        mode: "0700"
+        mode: "0644"
       when: not kafka_installed.stat.exists
 
     - name: Extract Kafka archive
@@ -45,8 +52,9 @@
       become: true
       ansible.builtin.copy:
         dest: /etc/profile.d/kafka.sh
-        content: 'export PATH={{ kafka_bin }}:"$PATH"'
-        mode: "0444"
+        content: |
+          export PATH={{ kafka_bin }}:$PATH
+        mode: "0755"
 
 
 - name: Configure Kafka
@@ -133,22 +141,22 @@
 
     - name: Ensure Kafka libs directory exists
       ansible.builtin.file:
-        path: /home/vagrant/kafka/libs
+        path: /etc/kafka/libs
         state: directory
         mode: '0755'
 
-    - name: Download Confluent S3 sink connector
-      ansible.builtin.get_url:
-        url: https://archives-761018874759.s3.eu-central-1.amazonaws.com/kafka/libs/confluentinc-kafka-connect-s3-12.1.5.zip
+    - name: Copy Confluent S3 sink connector ZIP
+      ansible.builtin.copy:
+        src: kafka/libs/confluentinc-kafka-connect-s3-12.1.5.zip
         dest: /tmp/confluentinc-kafka-connect-s3-12.1.5.zip
         mode: '0644'
 
     - name: Unarchive Confluent S3 sink connector
       ansible.builtin.unarchive:
         src: /tmp/confluentinc-kafka-connect-s3-12.1.5.zip
-        dest: /home/vagrant/kafka/libs
+        dest: /etc/kafka/libs
         remote_src: true
-        creates: /home/vagrant/kafka/libs/confluentinc-kafka-connect-s3-12.1.5
+        creates: /etc/kafka/libs/confluentinc-kafka-connect-s3-12.1.5
 
     - name: Ensure .aws directory exists
       ansible.builtin.file:
@@ -168,16 +176,16 @@
 
     - name: Download Debezium JDBC sink connector
       ansible.builtin.get_url:
-        url: https://archives-761018874759.s3.eu-central-1.amazonaws.com/kafka/libs/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
+        url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-jdbc/3.5.2.Final/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
         dest: /tmp/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
         mode: '0644'
 
     - name: Unarchive Debezium JDBC sink connector
       ansible.builtin.unarchive:
         src: /tmp/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
-        dest: /home/vagrant/kafka/libs
+        dest: /etc/kafka/libs
         remote_src: true
-        creates: /home/vagrant/kafka/libs/debezium-connector-jdbc-3.5.2.Final-plugin
+        creates: /etc/kafka/libs/debezium-connector-jdbc-3.5.2.Final-plugin
 
     - name: Create Kafka Connect systemd service
       become: true
@@ -265,42 +273,35 @@
 
 - name: Install Grafana
   hosts: all
+  gather_facts: false
   become: true
 
   tasks:
     - name: Install required packages
-      ansible.builtin.apt:
+      ansible.builtin.dnf:
         name:
           - wget
-          - gpg
-          - apt-transport-https
+          - curl
+          - gnupg2
         state: present
-        update_cache: true
 
-    - name: Create keyrings directory
-      ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: "0755"
-
-    - name: Download Grafana GPG key
-      ansible.builtin.get_url:
-        url: https://apt.grafana.com/gpg-full.key
-        dest: /etc/apt/keyrings/grafana.asc
+    - name: Create Grafana repo
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/grafana.repo
         mode: "0644"
-
-    - name: Add Grafana repository
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
-        filename: grafana
-        state: present
-
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
+        content: |
+          [grafana]
+          name=Grafana OSS
+          baseurl=https://rpm.grafana.com
+          repo_gpgcheck=1
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://rpm.grafana.com/gpg.key
+          sslverify=1
+          sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 
     - name: Install Grafana
-      ansible.builtin.apt:
+      ansible.builtin.dnf:
         name: grafana
         state: present
 
@@ -309,3 +310,18 @@
         name: grafana-server
         enabled: true
         state: started
+
+
+- name: Configure firewalld
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Enable Kafka port 9092
+      ansible.posix.firewalld:
+        port: 9092/tcp
+        state: enabled
+        permanent: true
+        immediate: true
+        offline: true

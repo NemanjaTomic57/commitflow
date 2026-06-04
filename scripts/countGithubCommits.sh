@@ -2,10 +2,14 @@
 
 set -euo pipefail
 
-GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+set -a
+source "../.env"
+set +a
 
-if [[ -z "$GITHUB_TOKEN" ]]; then
-    echo "Error: GITHUB_TOKEN environment variable is not set."
+GITHUB_PAT="${GITHUB_PAT:-}"
+
+if [[ -z "$GITHUB_PAT" ]]; then
+    echo "Error: GITHUB_PAT environment variable is not set."
     exit 1
 fi
 
@@ -13,7 +17,7 @@ API_URL="https://api.github.com"
 
 # Fetch all repositories visible to the token
 repos=$(curl -s \
-    -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+    -H "Authorization: Bearer ${GITHUB_PAT}" \
     -H "Accept: application/vnd.github+json" \
     "${API_URL}/user/repos?per_page=100" |
     jq -r '.[].full_name')
@@ -29,7 +33,7 @@ for repo in $repos; do
 
     while true; do
         commits=$(curl -s \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Authorization: Bearer ${GITHUB_PAT}" \
             -H "Accept: application/vnd.github+json" \
             "${API_URL}/repos/${repo}/commits?per_page=100&page=${page}")
 

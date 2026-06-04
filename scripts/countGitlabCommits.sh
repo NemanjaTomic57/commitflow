@@ -2,10 +2,14 @@
 
 set -euo pipefail
 
-GITLAB_TOKEN="${GITLAB_TOKEN:-}"
+set -a
+source "../.env"
+set +a
 
-if [[ -z "$GITLAB_TOKEN" ]]; then
-    echo "Error: GITLAB_TOKEN environment variable is not set."
+GITLAB_PAT="${GITLAB_PAT:-}"
+
+if [[ -z "$GITLAB_PAT" ]]; then
+    echo "Error: GITLAB_PAT environment variable is not set."
     exit 1
 fi
 
@@ -13,7 +17,7 @@ API_URL="https://gitlab.com/api/v4"
 
 # Fetch all projects visible to the token
 projects=$(curl -s \
-    --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+    --header "PRIVATE-TOKEN: ${GITLAB_PAT}" \
     "${API_URL}/projects?membership=true&per_page=100" |
     jq -r '.[].id')
 
@@ -24,7 +28,7 @@ echo "====================="
 
 for project_id in $projects; do
     project_name=$(curl -s \
-        --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+        --header "PRIVATE-TOKEN: ${GITLAB_PAT}" \
         "${API_URL}/projects/${project_id}" |
         jq -r '.path_with_namespace')
 
@@ -33,7 +37,7 @@ for project_id in $projects; do
 
     while true; do
         commits=$(curl -s \
-            --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+            --header "PRIVATE-TOKEN: ${GITLAB_PAT}" \
             "${API_URL}/projects/${project_id}/repository/commits?per_page=100&page=${page}")
 
         count=$(echo "$commits" | jq 'length')

@@ -34,30 +34,24 @@ fi
 # AWS CREDENTIALS
 #################################################
 
-if [[ "${AWS_ACCESS_KEY_ID:-}" != "" && "${AWS_SECRET_ACCESS_KEY:-}" != "" ]]; then
-  echo "Using AWS credentials from $ENV_FILE"
+if [[ "${AWS_ACCESS_KEY_ID:-}" == "" || "${AWS_SECRET_ACCESS_KEY:-}" == "" ]]; then
+  echo "ERROR: AWS credentials not set in .env"
+  env_err
+fi
 
-  cat > "$AWS_CREDENTIALS_FILE" << EOF
+cat > "$AWS_CREDENTIALS_FILE" << EOF
 [default]
 aws_access_key_id=$AWS_ACCESS_KEY_ID
 aws_secret_access_key=$AWS_SECRET_ACCESS_KEY
 EOF
 
-  chmod 600 "$AWS_CREDENTIALS_FILE"
-
-else
-  echo "ERROR: AWS credentials not set in .env"
-  env_err
-fi
+chmod 600 "$AWS_CREDENTIALS_FILE"
 
 #################################################
 # GITHUB PERSONAL ACCESS TOKEN
 #################################################
 
-if [[ "${GITHUB_PAT:-}" != "" ]]; then
-  echo "Using GITHUB_PAT from $ENV_FILE"
-else
-  echo
+if [[ "${GITHUB_PAT:-}" == "" ]]; then
   echo "ERROR: GitHub Personal Access Token not set in .env"
   env_err
 fi
@@ -66,10 +60,7 @@ fi
 # GITLAB PERSONAL ACCESS TOKEN
 #################################################
 
-if [[ "${GITLAB_PAT:-}" != "" ]]; then
-  echo "Using GITLAB_PAT from $ENV_FILE"
-else
-  echo
+if [[ "${GITLAB_PAT:-}" == "" ]]; then
   echo "ERROR: GitLab Personal Access Token not set in .env"
   env_err
 fi
@@ -78,23 +69,17 @@ fi
 # KAFKA CONNECT S3 SINK
 #################################################
 
-if [[ "${AWS_S3_BUCKET:-}" != "" ]]; then
-  echo "Using S3 bucket name from $ENV_FILE"
-
-  sed "s/<S3_BUCKET_NAME>/${AWS_S3_BUCKET}/g" \
-    "$CONNECTOR_TEMPLATE" > "$CONNECTOR_OUTPUT" 
-
-else
-  echo
+if [[ "${AWS_S3_BUCKET:-}" == "" ]]; then
   echo "ERROR: S3 bucket name not set in .env"
   env_err
 fi
 
+sed "s/<S3_BUCKET_NAME>/${AWS_S3_BUCKET}/g" \
+  "$CONNECTOR_TEMPLATE" > "$CONNECTOR_OUTPUT" 
+
 #################################################
 # START ENVIRONMENT
 #################################################
-
-echo
 
 cd vagrant
 

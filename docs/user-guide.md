@@ -1,4 +1,4 @@
-# Prerequisites
+# User Guide
 
 To run this application in your development environment, you will need to fulfill the following prerequisites:
 
@@ -99,12 +99,21 @@ This will start the Kafka broker on a virtual machine.
 
 You can automate the provisioning of the environemnt variables and the virtual machine by running the `provision.sh` script in the project root.
 
-## PostgreSQL Database
+## SSH into VM
 
-If you want to connect to the PostgreSQL database, you can do so from within the VM.
+To SSH into the VM, you can either use the ssh.sh script or use the following commands:
 
 ```bash
-sudo -U postgres psql
+cd vagrant
+vagrant ssh
+```
+
+## PostgreSQL Database
+
+If you want to connect to the PostgreSQL database, you can do so from within the VM as the vagrant user.
+
+```bash
+psql -d git_logs
 ```
 
 ## Grafana Dashboard

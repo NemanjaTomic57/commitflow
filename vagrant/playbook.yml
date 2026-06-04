@@ -3,8 +3,8 @@
   hosts: all
 
   vars:
-    kafka_url: https://www.apache.org/dyn/closer.lua/kafka/4.3.0/kafka_2.13-4.3.0.tgz?action=download
-    kafka_archive: kafka_2.13-4.3.0.tgz
+    kafka_url: https://downloads.apache.org/kafka/4.2.0/kafka_2.13-4.2.0.tgz
+    kafka_archive: kafka_2.13-4.2.0.tgz
 
   tasks:
     - name: Install dependencies
@@ -63,11 +63,12 @@
   vars:
     kafka_cluster_id: "{{ kafka }}/cluster.id"
     kafka_logs: "{{ kafka }}/logs"
-    kafka_config: /vagrant/kafka/server.properties
 
+    kafka_config: /vagrant/kafka/server.properties
     connect_config: /vagrant/kafka/connect/connect.properties
+
     connect_s3_name: s3-sink
-    connect_s3_config: ./kafka/connect/s3.json
+    connect_s3_config: "{{ kafka }}/connect-s3.json"
 
   tasks:
     - name: Check if cluster ID exists
@@ -105,27 +106,10 @@
 
     - name: Create Kafka systemd service
       become: true
-      ansible.builtin.copy:
+      ansible.builtin.template:
+        src: ./systemd/kafka.service.j2
         dest: /etc/systemd/system/kafka.service
         mode: '0644'
-        content: |
-          [Unit]
-          Description=Apache Kafka Server
-          After=network.target
-
-          [Service]
-          Type=simple
-          User=vagrant
-          Group=vagrant
-
-          ExecStart={{ kafka_bin }}/kafka-server-start.sh {{ kafka_config }}
-          ExecStop={{ kafka_bin }}/kafka-server-stop.sh
-
-          Restart=on-failure
-          RestartSec=10
-
-          [Install]
-          WantedBy=multi-user.target
 
     - name: Reload systemd
       become: true
@@ -141,22 +125,22 @@
 
     - name: Ensure Kafka libs directory exists
       ansible.builtin.file:
-        path: /etc/kafka/libs
+        path: "{{ kafka_libs }}"
         state: directory
         mode: '0755'
 
-    - name: Copy Confluent S3 sink connector ZIP
-      ansible.builtin.copy:
-        src: kafka/libs/confluentinc-kafka-connect-s3-12.1.5.zip
+    - name: Download Confluent S3 sink connector
+      ansible.builtin.get_url:
+        url: https://pub-7ea43db0438a4a858ae4acf14c0ae7f2.r2.dev/kafka/libs/confluentinc-kafka-connect-s3-12.1.5.zip
         dest: /tmp/confluentinc-kafka-connect-s3-12.1.5.zip
         mode: '0644'
 
     - name: Unarchive Confluent S3 sink connector
       ansible.builtin.unarchive:
         src: /tmp/confluentinc-kafka-connect-s3-12.1.5.zip
-        dest: /etc/kafka/libs
+        dest: "{{ kafka_libs }}"
         remote_src: true
-        creates: /etc/kafka/libs/confluentinc-kafka-connect-s3-12.1.5
+        creates: "{{ kafka_libs }}/confluentinc-kafka-connect-s3-12.1.5"
 
     - name: Ensure .aws directory exists
       ansible.builtin.file:
@@ -166,50 +150,36 @@
         group: vagrant
         mode: '0700'
 
-    - name: Copy AWS credentials
-      ansible.builtin.copy:
-        src: ./.aws/credentials
+    - name: Create AWS credentials file
+      ansible.builtin.template:
+        src: ./aws/credentials.j2
         dest: /home/vagrant/.aws/credentials
         owner: vagrant
         group: vagrant
         mode: '0600'
+      vars:
+        aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
 
     - name: Download Debezium JDBC sink connector
       ansible.builtin.get_url:
-        url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-jdbc/3.5.2.Final/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
+        url: https://pub-7ea43db0438a4a858ae4acf14c0ae7f2.r2.dev/kafka/libs/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
         dest: /tmp/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
         mode: '0644'
 
     - name: Unarchive Debezium JDBC sink connector
       ansible.builtin.unarchive:
         src: /tmp/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
-        dest: /etc/kafka/libs
+        dest: "{{ kafka_libs }}"
         remote_src: true
-        creates: /etc/kafka/libs/debezium-connector-jdbc-3.5.2.Final-plugin
+        creates: "{{ kafka_libs }}/debezium-connector-jdbc-3.5.2.Final-plugin"
 
     - name: Create Kafka Connect systemd service
       become: true
-      ansible.builtin.copy:
+      ansible.builtin.template:
+        src: ./systemd/kafka-connect.service.j2
         dest: /etc/systemd/system/kafka-connect.service
         mode: '0644'
-        content: |
-          [Unit]
-          Description=Apache Kafka Connect
-          After=network.target
-
-          [Service]
-          Type=simple
-          User=vagrant
-          Group=vagrant
-
-          ExecStart={{ kafka_bin }}/connect-distributed.sh {{ connect_config }}
-          ExecStop=/bin/kill $MAINPID
-
-          Restart=on-failure
-          RestartSec=10
-
-          [Install]
-          WantedBy=multi-user.target
 
     - name: Reload systemd
       become: true
@@ -225,7 +195,7 @@
 
     - name: Wait for Kafka Connect REST API
       ansible.builtin.uri:
-        url: http://192.168.56.10:8083/connectors
+        url: http://{{ ansible_host }}:8083/connectors
         method: GET
         status_code: 200
       register: connect_result
@@ -233,42 +203,65 @@
       delay: 5
       until: connect_result.status == 200
 
-    - name: Check if S3 connector already exists
-      ansible.builtin.uri:
-        url: http://192.168.56.10:8083/connectors/{{ connect_s3_name }}
-        method: GET
-        status_code:
-          - 200
-          - 404
-      register: s3_connector
+    - name: Render S3 connector config
+      ansible.builtin.template:
+        src: ./kafka/connect/s3.json.j2
+        dest: "{{ connect_s3_config }}"
+        mode: "0644"
+      vars:
+        s3_bucket_name: "{{ lookup('env', 'AWS_S3_BUCKET') }}"
 
-    - name: Create S3 connector
-      when: s3_connector.status == 404
+    - name: Read S3 connector config
+      ansible.builtin.slurp:
+        src: "{{ connect_s3_config }}"
+      register: s3_config
+
+    - name: Update S3 connector config
       ansible.builtin.uri:
-        url: http://192.168.56.10:8083/connectors
-        method: POST
+        url: "http://{{ ansible_host }}:8083/connectors/{{ connect_s3_name }}/config"
+        method: PUT
         body_format: json
-        body: "{{ lookup('file', connect_s3_config) }}"
+        body: "{{ (s3_config.content | b64decode | from_json).config }}"
         headers:
           Content-Type: application/json
         status_code:
           - 200
           - 201
 
-    - name: Update S3 connector config
-      ansible.builtin.uri:
-        url: "http://192.168.56.10:8083/connectors/{{ connect_s3_name }}/config"
-        method: PUT
-        body_format: json
-        body: >-
-          {{
-            lookup('file', connect_s3_config)
-            | from_json
-            | json_query('config')
-          }}
-        headers:
-          Content-Type: application/json
-        status_code: 200
+
+- name: Install and configure PostgreSQL
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Install PostgreSQL repository RPM
+      ansible.builtin.dnf:
+        name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        state: present
+        disable_gpg_check: true
+
+    - name: Install PostgreSQL 18 server
+      ansible.builtin.dnf:
+        name: postgresql18-server
+        state: present
+
+    - name: Check if PostgreSQL data directory exists
+      ansible.builtin.stat:
+        path: /var/lib/pgsql/18/data/PG_VERSION
+      register: pg_data
+
+    - name: Initialize PostgreSQL database
+      ansible.builtin.command:
+        cmd: /usr/pgsql-18/bin/postgresql-18-setup initdb
+      when: not pg_data.stat.exists
+      changed_when: true
+
+    - name: Enable and start PostgreSQL service
+      ansible.builtin.systemd:
+        name: postgresql-18
+        enabled: true
+        state: started
 
 
 - name: Install Grafana

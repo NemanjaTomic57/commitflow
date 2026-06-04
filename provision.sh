@@ -39,14 +39,6 @@ if [[ "${AWS_ACCESS_KEY_ID:-}" == "" || "${AWS_SECRET_ACCESS_KEY:-}" == "" ]]; t
   env_err
 fi
 
-cat > "$AWS_CREDENTIALS_FILE" << EOF
-[default]
-aws_access_key_id=$AWS_ACCESS_KEY_ID
-aws_secret_access_key=$AWS_SECRET_ACCESS_KEY
-EOF
-
-chmod 600 "$AWS_CREDENTIALS_FILE"
-
 #################################################
 # GITHUB PERSONAL ACCESS TOKEN
 #################################################
@@ -73,9 +65,6 @@ if [[ "${AWS_S3_BUCKET:-}" == "" ]]; then
   echo "ERROR: S3 bucket name not set in .env"
   env_err
 fi
-
-sed "s/<S3_BUCKET_NAME>/${AWS_S3_BUCKET}/g" \
-  "$CONNECTOR_TEMPLATE" > "$CONNECTOR_OUTPUT" 
 
 #################################################
 # START ENVIRONMENT

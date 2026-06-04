@@ -1,0 +1,18 @@
+[Unit]
+Description=Apache Kafka Connect
+After=kafka.service
+Requires=kafka.service
+
+[Service]
+Type=simple
+User=vagrant
+Group=vagrant
+
+ExecStart={{ kafka_bin }}/connect-distributed.sh {{ connect_config }}
+ExecStop=/bin/kill $MAINPID
+
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

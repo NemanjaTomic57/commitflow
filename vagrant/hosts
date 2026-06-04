@@ -6,5 +6,6 @@ ansible_user=vagrant
 ansible_ssh_extra_args=-o StrictHostKeyChecking=off
 
 kafka=/etc/kafka
-kafka_install_dir="{{ kafka }}/kafka_2.13-4.3.0"
+kafka_install_dir="{{ kafka }}/kafka_2.13-4.2.0"
 kafka_bin="{{ kafka_install_dir }}/bin"
+kafka_libs="{{ kafka }}/libs"

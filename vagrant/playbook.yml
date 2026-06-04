@@ -263,6 +263,25 @@
         enabled: true
         state: started
 
+    - name: Install PostgreSQL Python dependencies
+      ansible.builtin.dnf:
+        name: python3-psycopg2
+        state: present
+
+    - name: Create DB user
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_user:
+        name: vagrant
+        password: password
+
+    - name: Create DB user
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_db:
+        name: git_logs
+        owner: vagrant
+
 
 - name: Install Grafana
   hosts: all

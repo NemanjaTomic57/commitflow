@@ -99,6 +99,14 @@ This will start the Kafka broker on a virtual machine.
 
 You can automate the provisioning of the environemnt variables and the virtual machine by running the `provision.sh` script in the project root.
 
+## PostgreSQL Database
+
+If you want to connect to the PostgreSQL database, you can do so from within the VM.
+
+```bash
+sudo -U postgres psql
+```
+
 ## Grafana Dashboard
 
 The Grafana dashboard is available under http://192.168.56.10:3000.

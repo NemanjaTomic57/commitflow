@@ -1,0 +1,16 @@
+{
+  "name": "jdbc-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
+    "tasks.max": "1",
+    "connection.url": "jdbc:postgresql://localhost/git_logs",
+    "connection.username": "vagrant",
+    "connection.password": "password",
+    "insert.mode": "upsert",
+    "primary.key.mode": "record_value",
+    "primary.key.fields": "id",
+    "schema.evolution": "basic",
+    "use.time.zone": "UTC",
+    "topics": "git.commits"
+  }
+}

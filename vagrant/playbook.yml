@@ -67,7 +67,6 @@
     kafka_config: /vagrant/kafka/server.properties
     connect_config: /vagrant/kafka/connect/connect.properties
 
-    connect_s3_name: s3-sink
     connect_s3_config: "{{ kafka }}/connect-s3.json"
 
   tasks:
@@ -218,10 +217,22 @@
 
     - name: Update S3 connector config
       ansible.builtin.uri:
-        url: "http://{{ ansible_host }}:8083/connectors/{{ connect_s3_name }}/config"
+        url: "http://{{ ansible_host }}:8083/connectors/s3-sink/config"
         method: PUT
         body_format: json
         body: "{{ (s3_config.content | b64decode | from_json).config }}"
+        headers:
+          Content-Type: application/json
+        status_code:
+          - 200
+          - 201
+
+    - name: Update PostgreSQL connector config
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}:8083/connectors/postgres-sink/config"
+        method: PUT
+        body_format: json
+        body: "{{ (lookup('file', './kafka/connect/debezium.json') | from_json).config }}"
         headers:
           Content-Type: application/json
         status_code:

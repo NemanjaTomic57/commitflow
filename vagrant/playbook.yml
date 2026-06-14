@@ -113,14 +113,11 @@
 
 - name: Configure Kafka
   hosts: all
-
   vars:
     kafka_cluster_id: "{{ kafka }}/cluster.id"
     kafka_logs: "{{ kafka }}/logs"
-
     kafka_config: /vagrant/kafka/server.properties
     connect_config: /vagrant/kafka/connect/connect.properties
-
     connect_s3_config: "{{ kafka }}/connect-s3.json"
 
   tasks:
@@ -294,47 +291,6 @@
           - 201
 
 
-- name: Install Grafana
-  hosts: all
-  gather_facts: false
-  become: true
-
-  tasks:
-    - name: Install required packages
-      ansible.builtin.dnf:
-        name:
-          - wget
-          - curl
-          - gnupg2
-        state: present
-
-    - name: Create Grafana repo
-      ansible.builtin.copy:
-        dest: /etc/yum.repos.d/grafana.repo
-        mode: "0644"
-        content: |
-          [grafana]
-          name=Grafana OSS
-          baseurl=https://rpm.grafana.com
-          repo_gpgcheck=1
-          enabled=1
-          gpgcheck=1
-          gpgkey=https://rpm.grafana.com/gpg.key
-          sslverify=1
-          sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-
-    - name: Install Grafana
-      ansible.builtin.dnf:
-        name: grafana
-        state: present
-
-    - name: Enable and start Grafana
-      ansible.builtin.systemd:
-        name: grafana-server
-        enabled: true
-        state: started
-
-
 - name: Install Protocol Buffers Compiler (protoc)
   hosts: all
   vars:
@@ -381,6 +337,47 @@
         path: "{{ ansible_facts['env'].HOME }}/.bashrc"
         line: 'export PATH="$PATH:$HOME/.local/protoc/bin"'
         state: present
+
+
+- name: Install Grafana
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Install required packages
+      ansible.builtin.dnf:
+        name:
+          - wget
+          - curl
+          - gnupg2
+        state: present
+
+    - name: Create Grafana repo
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/grafana.repo
+        mode: "0644"
+        content: |
+          [grafana]
+          name=Grafana OSS
+          baseurl=https://rpm.grafana.com
+          repo_gpgcheck=1
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://rpm.grafana.com/gpg.key
+          sslverify=1
+          sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+    - name: Install Grafana
+      ansible.builtin.dnf:
+        name: grafana
+        state: present
+
+    - name: Enable and start Grafana
+      ansible.builtin.systemd:
+        name: grafana-server
+        enabled: true
+        state: started
 
 
 - name: Configure firewalld

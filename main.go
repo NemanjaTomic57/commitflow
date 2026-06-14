@@ -35,7 +35,8 @@ func bootstrap() {
 	topic := "git.commits"
 
 	for message := range messages {
-		kafka.ProduceKafkaEvents(producer, message, topic)
+		// kafka.ProduceKafkaEvents(producer, message, topic)
+		kafka.ProduceSchema(producer, message, topic)
 	}
 
 	producer.Flush(15 * 1000)

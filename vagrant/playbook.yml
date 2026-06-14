@@ -57,6 +57,60 @@
         mode: "0755"
 
 
+- name: Install and configure PostgreSQL
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Install PostgreSQL repository RPM
+      ansible.builtin.dnf:
+        name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        state: present
+        disable_gpg_check: true
+
+    - name: Install PostgreSQL 18 server
+      ansible.builtin.dnf:
+        name: postgresql18-server
+        state: present
+
+    - name: Check if PostgreSQL data directory exists
+      ansible.builtin.stat:
+        path: /var/lib/pgsql/18/data/PG_VERSION
+      register: pg_data
+
+    - name: Initialize PostgreSQL database
+      ansible.builtin.command:
+        cmd: /usr/pgsql-18/bin/postgresql-18-setup initdb
+      when: not pg_data.stat.exists
+      changed_when: true
+
+    - name: Enable and start PostgreSQL service
+      ansible.builtin.systemd:
+        name: postgresql-18
+        enabled: true
+        state: started
+
+    - name: Install PostgreSQL Python dependencies
+      ansible.builtin.dnf:
+        name: python3-psycopg2
+        state: present
+
+    - name: Create DB user
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_user:
+        name: vagrant
+        password: password
+
+    - name: Create DB user
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_db:
+        name: git_logs
+        owner: vagrant
+
+
 - name: Configure Kafka
   hosts: all
 
@@ -160,18 +214,18 @@
         aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
         aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
 
-    - name: Download Debezium JDBC sink connector
+    - name: Download Confluent JDBC sink connector
       ansible.builtin.get_url:
-        url: https://pub-7ea43db0438a4a858ae4acf14c0ae7f2.r2.dev/kafka/libs/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
-        dest: /tmp/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
+        url: https://pub-7ea43db0438a4a858ae4acf14c0ae7f2.r2.dev/kafka/libs/confluentinc-kafka-connect-jdbc-10.9.4.zip
+        dest: /tmp/confluentinc-kafka-connect-jdbc-10.9.4.zip
         mode: '0644'
 
-    - name: Unarchive Debezium JDBC sink connector
+    - name: Unarchive Confluent JDBC sink connector
       ansible.builtin.unarchive:
-        src: /tmp/debezium-connector-jdbc-3.5.2.Final-plugin.tar.gz
+        src: /tmp/confluentinc-kafka-connect-jdbc-10.9.4.zip
         dest: "{{ kafka_libs }}"
         remote_src: true
-        creates: "{{ kafka_libs }}/debezium-connector-jdbc-3.5.2.Final-plugin"
+        creates: "{{ kafka_libs }}/confluentinc-kafka-connect-jdbc-10.9.4"
 
     - name: Create Kafka Connect systemd service
       become: true
@@ -232,66 +286,12 @@
         url: "http://{{ ansible_host }}:8083/connectors/postgres-sink/config"
         method: PUT
         body_format: json
-        body: "{{ (lookup('file', './kafka/connect/debezium.json') | from_json).config }}"
+        body: "{{ (lookup('file', './kafka/connect/postgres.json') | from_json).config }}"
         headers:
           Content-Type: application/json
         status_code:
           - 200
           - 201
-
-
-- name: Install and configure PostgreSQL
-  hosts: all
-  gather_facts: false
-  become: true
-
-  tasks:
-    - name: Install PostgreSQL repository RPM
-      ansible.builtin.dnf:
-        name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-        state: present
-        disable_gpg_check: true
-
-    - name: Install PostgreSQL 18 server
-      ansible.builtin.dnf:
-        name: postgresql18-server
-        state: present
-
-    - name: Check if PostgreSQL data directory exists
-      ansible.builtin.stat:
-        path: /var/lib/pgsql/18/data/PG_VERSION
-      register: pg_data
-
-    - name: Initialize PostgreSQL database
-      ansible.builtin.command:
-        cmd: /usr/pgsql-18/bin/postgresql-18-setup initdb
-      when: not pg_data.stat.exists
-      changed_when: true
-
-    - name: Enable and start PostgreSQL service
-      ansible.builtin.systemd:
-        name: postgresql-18
-        enabled: true
-        state: started
-
-    - name: Install PostgreSQL Python dependencies
-      ansible.builtin.dnf:
-        name: python3-psycopg2
-        state: present
-
-    - name: Create DB user
-      become: true
-      become_user: postgres
-      community.postgresql.postgresql_user:
-        name: vagrant
-        password: password
-
-    - name: Create DB user
-      become: true
-      become_user: postgres
-      community.postgresql.postgresql_db:
-        name: git_logs
-        owner: vagrant
 
 
 - name: Install Grafana

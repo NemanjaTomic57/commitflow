@@ -1,0 +1,15 @@
+{
+  "name": "postgres-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "topics": "git.commits",
+
+    "connection.url": "jdbc:postgresql://127.0.0.1:5432/git_logs",
+    "connection.loginTimeout": "10",
+    "connection.user": "vagrant",
+    "connection.password": "password",
+
+    "pk.mode": "record_value",
+    "pk.fields": "id"
+  }
+}

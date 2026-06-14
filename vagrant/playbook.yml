@@ -335,6 +335,54 @@
         state: started
 
 
+- name: Install Protocol Buffers Compiler (protoc)
+  hosts: all
+  vars:
+    install_dir: "{{ ansible_facts['env'].HOME }}/.local/protoc"
+
+  tasks:
+    - name: Ensure required packages are installed
+      become: true
+      ansible.builtin.dnf:
+        name:
+          - curl
+          - unzip
+          - jq
+        state: present
+
+    - name: Get latest protoc download URL
+      ansible.builtin.shell: |
+        set -o pipefail
+        curl -s https://api.github.com/repos/protocolbuffers/protobuf/releases/latest \
+          | jq -r '.assets[] | select(.name | endswith("linux-x86_64.zip")) | .browser_download_url'
+      register: protoc_url
+      changed_when: false
+
+    - name: Download protoc archive
+      ansible.builtin.get_url:
+        url: "{{ protoc_url.stdout }}"
+        dest: /tmp/protoc.zip
+        mode: '0644'
+
+    - name: Create installation directory
+      ansible.builtin.file:
+        path: "{{ install_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Extract protoc
+      ansible.builtin.unarchive:
+        src: /tmp/protoc.zip
+        dest: "{{ install_dir }}"
+        remote_src: true
+
+    - name: Add protoc to PATH
+      ansible.builtin.lineinfile:
+        path: "{{ ansible_facts['env'].HOME }}/.bashrc"
+        line: 'export PATH="$PATH:$HOME/.local/protoc/bin"'
+        state: present
+
+
 - name: Configure firewalld
   hosts: all
   gather_facts: false

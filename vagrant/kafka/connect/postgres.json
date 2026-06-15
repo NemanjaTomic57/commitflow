@@ -9,7 +9,10 @@
     "connection.user": "vagrant",
     "connection.password": "password",
 
+    "insert.mode": "upsert",
     "pk.mode": "record_value",
-    "pk.fields": "id"
+    "pk.fields": "id",
+
+    "auto.create": true
   }
 }

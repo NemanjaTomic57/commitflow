@@ -4,14 +4,6 @@ set -euo pipefail
 
 ENV_FILE="./.env"
 
-AWS_DIR="./vagrant/.aws"
-AWS_CREDENTIALS_FILE="$AWS_DIR/credentials"
-
-CONNECTOR_TEMPLATE="./vagrant/kafka/connect/s3.json.template"
-CONNECTOR_OUTPUT="./vagrant/kafka/connect/s3.json"
-
-mkdir -p "$AWS_DIR"
-
 env_err() {
   echo "Resolution: Copy .env.example to .env and enter all required variables to continue"
   exit 1
@@ -31,7 +23,7 @@ else
 fi
 
 #################################################
-# AWS CREDENTIALS
+# CHECK ENVIRONMENT VARIABLES
 #################################################
 
 if [[ "${AWS_ACCESS_KEY_ID:-}" == "" || "${AWS_SECRET_ACCESS_KEY:-}" == "" ]]; then
@@ -39,27 +31,15 @@ if [[ "${AWS_ACCESS_KEY_ID:-}" == "" || "${AWS_SECRET_ACCESS_KEY:-}" == "" ]]; t
   env_err
 fi
 
-#################################################
-# GITHUB PERSONAL ACCESS TOKEN
-#################################################
-
 if [[ "${GITHUB_PAT:-}" == "" ]]; then
   echo "ERROR: GitHub Personal Access Token not set in .env"
   env_err
 fi
 
-#################################################
-# GITLAB PERSONAL ACCESS TOKEN
-#################################################
-
 if [[ "${GITLAB_PAT:-}" == "" ]]; then
   echo "ERROR: GitLab Personal Access Token not set in .env"
   env_err
 fi
-
-#################################################
-# KAFKA CONNECT S3 SINK
-#################################################
 
 if [[ "${AWS_S3_BUCKET:-}" == "" ]]; then
   echo "ERROR: S3 bucket name not set in .env"

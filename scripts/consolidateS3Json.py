@@ -3,7 +3,7 @@ import json
 
 all_commits = []
 
-for filename in sorted(glob.glob("git.commits*.json")):
+for filename in sorted(glob.glob("git_commits*.json")):
     with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()

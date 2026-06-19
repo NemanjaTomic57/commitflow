@@ -96,19 +96,19 @@
         name: python3-psycopg2
         state: present
 
-    - name: Create DB user
+    - name: Configure PostgreSQL
       become: true
       become_user: postgres
-      community.postgresql.postgresql_user:
-        name: vagrant
-        password: password
+      block:
+        - name: Create DB user
+          community.postgresql.postgresql_user:
+            name: vagrant
+            password: password
 
-    - name: Create DB user
-      become: true
-      become_user: postgres
-      community.postgresql.postgresql_db:
-        name: git_logs
-        owner: vagrant
+        - name: Create database
+          community.postgresql.postgresql_db:
+            name: jdbc_sink
+            owner: vagrant
 
 
 - name: Configure Kafka

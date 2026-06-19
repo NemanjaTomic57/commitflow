@@ -32,7 +32,7 @@ func bootstrap() {
 	producer := kafka.NewProducer()
 	defer producer.Close()
 
-	topic := "git.commits"
+	topic := "git_commits"
 
 	for message := range messages {
 		// kafka.ProduceKafkaEvents(producer, message, topic)

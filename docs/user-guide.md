@@ -113,7 +113,7 @@ vagrant ssh
 If you want to connect to the PostgreSQL database, you can do so from within the VM as the vagrant user.
 
 ```bash
-psql -d git_logs
+psql -d commitflow
 ```
 
 ## Grafana Dashboard

@@ -6,23 +6,23 @@ import (
 	"sync"
 
 	"github.com/NemanjaTomic57/commitflow/internal/aws"
-	"github.com/NemanjaTomic57/commitflow/internal/github"
 	"github.com/NemanjaTomic57/commitflow/internal/gitlab"
 	"github.com/NemanjaTomic57/commitflow/internal/kafka"
+	"github.com/NemanjaTomic57/commitflow/proto"
 	"github.com/joho/godotenv"
 )
 
 func bootstrap() {
-	messages := make(chan kafka.GitCommit)
+	messages := make(chan *proto.GitCommit)
 	var wg sync.WaitGroup
 
 	wg.Go(func() {
 		gitlab.GetAllCommits(messages)
 	})
 
-	wg.Go(func() {
-		github.GetAllCommits(messages)
-	})
+	// wg.Go(func() {
+	// 	github.GetAllCommits(messages)
+	// })
 
 	go func() {
 		wg.Wait()
@@ -35,8 +35,7 @@ func bootstrap() {
 	topic := "git_commits"
 
 	for message := range messages {
-		// kafka.ProduceKafkaEvents(producer, message, topic)
-		kafka.ProduceSchema(producer, message, topic)
+		kafka.ProduceKafkaEvents(producer, message, topic)
 	}
 
 	producer.Flush(15 * 1000)

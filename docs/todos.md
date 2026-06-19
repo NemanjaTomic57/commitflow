@@ -1,6 +1,6 @@
 # To Do's
 
-- Schema with Protobuf
+- Schema with Protobuf and schema registry
 - Create Grafana dashboard
 - Implement cronjobs for recurring API requests
 
@@ -12,3 +12,10 @@
     - PostgreSQL
     - Grafana
     - HTTPS Proxy
+
+## Production
+
+- HA Kafka cluster
+- Protobuf schemas
+- Schema registry
+- Deployment to AWS with Terraform

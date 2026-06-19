@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NemanjaTomic57/commitflow/internal/kafka"
 	"github.com/NemanjaTomic57/commitflow/internal/utils"
+	"github.com/NemanjaTomic57/commitflow/proto"
 )
 
 var baseURL = "https://gitlab.com/api/v4"
 
 // Get all commits for all projects.
-func GetAllCommits(messages chan kafka.GitCommit) {
+func GetAllCommits(messages chan *proto.GitCommit) {
 	// Fetch all project IDs
 	projects := fetchAllProjects()
 

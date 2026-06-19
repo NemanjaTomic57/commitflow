@@ -1,0 +1,16 @@
+edition = "2024";
+package commitflow;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/NemanjaTomic57/commitflow/proto";
+
+message GitCommit {
+  string id = 1;
+  string author_name = 2;
+  string author_email = 3;
+  string message = 4;
+  google.protobuf.Timestamp created_at = 5;
+  string url = 6;
+  string provider = 7;
+}

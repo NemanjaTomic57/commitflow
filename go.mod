@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.42.3
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/joho/godotenv v1.5.1
+	google.golang.org/protobuf v1.36.11
 )
 
 require (

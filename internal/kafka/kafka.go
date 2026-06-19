@@ -88,11 +88,6 @@ var GitCommitSchema = Schema{
 	},
 }
 
-type Message struct {
-	Schema  Schema  `json:"schema"`
-	Payload Payload `json:"payload"`
-}
-
 type Schema struct {
 	Type     string        `json:"type"`
 	Fields   []SchemaField `json:"fields"`
@@ -104,13 +99,6 @@ type SchemaField struct {
 	Type     string `json:"type"`
 	Optional bool   `json:"optional"`
 	Field    string `json:"field"`
-}
-
-type Payload struct {
-	RegisterTime int64  `json:"registertime"`
-	UserID       string `json:"userid"`
-	RegionID     string `json:"regionid"`
-	Gender       string `json:"gender"`
 }
 
 func ProduceSchema(p *kafka.Producer, message GitCommit, topic string) {

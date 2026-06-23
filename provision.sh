@@ -26,11 +26,6 @@ fi
 # CHECK ENVIRONMENT VARIABLES
 #################################################
 
-if [[ "${AWS_ACCESS_KEY_ID:-}" == "" || "${AWS_SECRET_ACCESS_KEY:-}" == "" ]]; then
-  echo "ERROR: AWS credentials not set in .env"
-  env_err
-fi
-
 if [[ "${GITHUB_PAT:-}" == "" ]]; then
   echo "ERROR: GitHub Personal Access Token not set in .env"
   env_err
@@ -38,11 +33,6 @@ fi
 
 if [[ "${GITLAB_PAT:-}" == "" ]]; then
   echo "ERROR: GitLab Personal Access Token not set in .env"
-  env_err
-fi
-
-if [[ "${AWS_S3_BUCKET:-}" == "" ]]; then
-  echo "ERROR: S3 bucket name not set in .env"
   env_err
 fi
 

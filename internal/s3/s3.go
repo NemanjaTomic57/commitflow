@@ -1,4 +1,4 @@
-package aws
+package s3
 
 import (
 	"context"
@@ -6,23 +6,14 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 func ResetS3Data() error {
 	bucket := os.Getenv("AWS_S3_BUCKET")
-	if bucket == "" {
-		return fmt.Errorf("AWS_S3_BUCKET is not set in .env file")
-	}
 
 	ctx := context.Background()
-
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return fmt.Errorf("aws.ResetS3Data() -> error loading default aws config: %w", err)
-	}
 
 	client := s3.NewFromConfig(cfg)
 

@@ -67,7 +67,7 @@ The long-term goal is to create a reproducible and scalable streaming platform s
 - **Terraform**
 - **Ansible**
 - **Grafana**
-- **AWS**
+- **MinIO**
 
 ## Learning Objectives
 

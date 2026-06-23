@@ -4,17 +4,11 @@ To run this application in your development environment, you will need to fulfil
 
 First, git pull the project.
 
-- Install Virtualbox
-- Install Vagrant
-- Install Ansible
-- pip install jmespath
-- Install Golang
-- S3 bucket in AWS
-- AWS IAM user with permissions to the bucket
-- GitHub Personal Access Token
-- GitLab Personal Access Token
+You need to...
 
-Ansible requires you to install 
+- ...install Golang.
+- ...create a GitHub Personal Access Token.
+- ...create a GitLab Personal Access Token.
 
 ## AWS IAM
 

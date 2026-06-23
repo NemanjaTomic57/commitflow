@@ -7,15 +7,13 @@
 ## For Final Version?
 
 - Migrate to Docker and do not use Vagrant
-    - Kafka -> Confluent Platform
-    - Kafka Connect
+    - Kafka
+    - MinIO
     - PostgreSQL
+    - Schema registry
     - Grafana
-    - HTTPS Proxy
 
 ## Production
 
 - HA Kafka cluster
-- Protobuf schemas
-- Schema registry
 - Deployment to AWS with Terraform

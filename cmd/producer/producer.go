@@ -2,12 +2,10 @@ package main
 
 import (
 	"flag"
-	"log"
 	"sync"
 
 	"github.com/NemanjaTomic57/commitflow/internal/gitlab"
 	"github.com/NemanjaTomic57/commitflow/internal/kafka"
-	"github.com/NemanjaTomic57/commitflow/internal/s3"
 	"github.com/NemanjaTomic57/commitflow/proto"
 	"github.com/joho/godotenv"
 )
@@ -15,13 +13,8 @@ import (
 var topic = "git_commits"
 
 func bootstrap() {
-	messages := make(chan *proto.GitCommit)
 	var wg sync.WaitGroup
-
-	err := s3.ResetS3Data()
-	if err != nil {
-		log.Fatal(err)
-	}
+	messages := make(chan *proto.GitCommit)
 
 	wg.Go(func() {
 		gitlab.GetAllCommits(messages)
@@ -40,22 +33,14 @@ func bootstrap() {
 	defer producer.Close()
 
 	for message := range messages {
-		go kafka.ProduceKafkaEvents(producer, message, topic)
+		go kafka.ProduceEvent(producer, message, topic)
 	}
 
 	producer.Flush(15 * 1000)
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("main() -> error loading .env file")
-	}
-
-	consumer := kafka.NewConsumer()
-	go kafka.ConsumeMessage(consumer, topic)
-	defer consumer.Close()
-
+	godotenv.Load()
 	bootstrapFlag := flag.Bool("bootstrap", false, "Bootstrap infrastructure")
 	flag.Parse()
 
@@ -63,9 +48,5 @@ func main() {
 	if *bootstrapFlag {
 		bootstrap()
 	}
-
-	// var wg sync.WaitGroup
-	// wg.Add(1)
-	// wg.Wait()
 	// TODO: Implement cronjobs for API requests to Git
 }

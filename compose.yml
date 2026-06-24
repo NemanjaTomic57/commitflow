@@ -27,13 +27,27 @@ services:
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:19092 --list >/dev/null 2>&1"
+          'CMD-SHELL',
+          '/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:19092 --list >/dev/null 2>&1'
         ]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  db:
+    image: postgres:17.10-bookworm
+    container_name: db
+    networks:
+      - commitflow_default
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'commitflow'
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
 networks:
   commitflow_default:

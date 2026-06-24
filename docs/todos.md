@@ -8,12 +8,11 @@
 
 - Migrate to Docker and do not use Vagrant
     - Kafka
-    - MinIO
     - PostgreSQL
     - Schema registry
     - Grafana
 
 ## Production
 
-- HA Kafka cluster
+- Standalone EC2 instance with Kafka and Grafana dashboard
 - Deployment to AWS with Terraform

@@ -41,22 +41,6 @@ func NewProducer() *kafka.Producer {
 }
 
 func ProduceEvent(producer *kafka.Producer, message *proto.GitCommit, topic string) {
-	// Get results back from producing to Kafka and print to console
-	go func() {
-		for e := range producer.Events() {
-			switch ev := e.(type) {
-			case *kafka.Message:
-				if ev.TopicPartition.Error != nil {
-					log.Println("ERROR kafka.ProduceKafkaEvents() -> delivery failed:", ev.TopicPartition)
-				} else {
-					log.Println("LOG kafka.ProduceKafkaEvents() -> delivered message to:", ev.TopicPartition)
-				}
-			}
-		}
-	}()
-
-	// fmt.Println(message)
-
 	messageBytes, err := gproto.Marshal(message)
 	if err != nil {
 		log.Printf("ERROR kafka.ProduceKafkaEvents() -> marshalling object failed: %v", err)
@@ -87,7 +71,7 @@ func NewConsumer(groupID string) *kafka.Consumer {
 	return consumer
 }
 
-func ConsumeEvent(ctx context.Context, consumer *kafka.Consumer, topic string, messages chan string) {
+func ConsumeEvent(ctx context.Context, consumer *kafka.Consumer, topic string, messages chan *proto.GitCommit) {
 	err := consumer.Subscribe(topic, nil)
 	if err != nil {
 		log.Fatalf("kafka.ConsumeEvent() -> ERROR when subscribing to topic: %v\n", err)
@@ -97,7 +81,7 @@ func ConsumeEvent(ctx context.Context, consumer *kafka.Consumer, topic string, m
 		select {
 		case <-ctx.Done():
 			close(messages)
-			fmt.Printf("\nExiting gracefully\n")
+			fmt.Printf("\nGraceful exit\n")
 			return
 		default:
 		}
@@ -113,7 +97,7 @@ func ConsumeEvent(ctx context.Context, consumer *kafka.Consumer, topic string, m
 			continue
 		}
 
-		messages <- message.String()
+		messages <- &message
 	}
 }
 

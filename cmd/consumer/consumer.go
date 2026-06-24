@@ -2,17 +2,60 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/NemanjaTomic57/commitflow/internal/kafka"
+	"github.com/NemanjaTomic57/commitflow/proto"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
 )
 
+var query = `
+INSERT INTO git_commits (
+	provider,
+	id,
+	path,
+	path_with_namespace,
+	author_name,
+	author_email,
+	message,
+	url,
+	created_at
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+ON CONFLICT (provider, id) DO UPDATE SET
+	path = EXCLUDED.path,
+	path_with_namespace = EXCLUDED.path_with_namespace,
+	author_name = EXCLUDED.author_name,
+	author_email = EXCLUDED.author_email,
+	message = EXCLUDED.message,
+	url = EXCLUDED.url,
+	created_at = EXCLUDED.created_at
+`
+
 func main() {
 	godotenv.Load()
+	connectionString := os.Getenv("POSTGRES_URL")
+
+	m, err := migrate.New(
+		"file://migrations",
+		connectionString,
+	)
+	if err != nil {
+		log.Fatalf("ERROR failed to create migrate instance: %v", err)
+	}
+	if err = m.Up(); err != nil {
+		if err != migrate.ErrNoChange {
+			log.Fatalf("ERROR applying database migration failed: %v", err)
+		}
+		log.Println("INFO database is already up to date")
+	}
 
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
@@ -27,14 +70,44 @@ func main() {
 }
 
 func postgresSink(ctx context.Context) {
-	messages := make(chan string)
+	messages := make(chan *proto.GitCommit)
 
 	consumer := kafka.NewConsumer("postgres-sink")
 	defer consumer.Close()
 
 	go kafka.ConsumeEvent(ctx, consumer, kafka.Topic, messages)
 
+	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
+	if err != nil {
+		log.Fatalf("ERROR postgresSink() -> could not open database connection: %v", err)
+	}
+	defer db.Close()
+
+	err = db.Ping()
+	if err != nil {
+		log.Fatalf("ERROR postgresSink() -> could not establish database connection: %v", err)
+	}
+
 	for {
-		fmt.Println(<-messages)
+		message := <-messages
+		_, err := db.ExecContext(
+			ctx,
+			query,
+			message.GetProvider(),
+			message.GetId(),
+			message.GetPath(),
+			message.GetPathWithNamespace(),
+			message.GetAuthorName(),
+			message.GetAuthorEmail(),
+			message.GetMessage(),
+			message.GetUrl(),
+			message.GetCreatedAt().AsTime(),
+		)
+		if err != nil {
+			log.Printf("ERROR postgresSink() -> failed to insert commit %s/%s: %v",
+				message.GetProvider(),
+				message.GetId(),
+				err)
+		}
 	}
 }

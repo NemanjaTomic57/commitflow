@@ -7,12 +7,11 @@
 package proto
 
 import (
-	reflect "reflect"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	unsafe "unsafe"
 )
 
 const (
@@ -23,18 +22,20 @@ const (
 )
 
 type GitCommit struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id          *string                `protobuf:"bytes,1,opt,name=id"`
-	xxx_hidden_AuthorName  *string                `protobuf:"bytes,2,opt,name=author_name,json=authorName"`
-	xxx_hidden_AuthorEmail *string                `protobuf:"bytes,3,opt,name=author_email,json=authorEmail"`
-	xxx_hidden_Message     *string                `protobuf:"bytes,4,opt,name=message"`
-	xxx_hidden_CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt"`
-	xxx_hidden_Url         *string                `protobuf:"bytes,6,opt,name=url"`
-	xxx_hidden_Provider    *string                `protobuf:"bytes,7,opt,name=provider"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Provider          *string                `protobuf:"bytes,1,opt,name=provider"`
+	xxx_hidden_Id                *string                `protobuf:"bytes,2,opt,name=id"`
+	xxx_hidden_Path              *string                `protobuf:"bytes,3,opt,name=path"`
+	xxx_hidden_PathWithNamespace *string                `protobuf:"bytes,4,opt,name=path_with_namespace,json=pathWithNamespace"`
+	xxx_hidden_AuthorName        *string                `protobuf:"bytes,5,opt,name=author_name,json=authorName"`
+	xxx_hidden_AuthorEmail       *string                `protobuf:"bytes,6,opt,name=author_email,json=authorEmail"`
+	xxx_hidden_Message           *string                `protobuf:"bytes,7,opt,name=message"`
+	xxx_hidden_Url               *string                `protobuf:"bytes,8,opt,name=url"`
+	xxx_hidden_CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt"`
+	XXX_raceDetectHookData       protoimpl.RaceDetectHookData
+	XXX_presence                 [1]uint32
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *GitCommit) Reset() {
@@ -62,10 +63,40 @@ func (x *GitCommit) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
+func (x *GitCommit) GetProvider() string {
+	if x != nil {
+		if x.xxx_hidden_Provider != nil {
+			return *x.xxx_hidden_Provider
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *GitCommit) GetId() string {
 	if x != nil {
 		if x.xxx_hidden_Id != nil {
 			return *x.xxx_hidden_Id
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *GitCommit) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *GitCommit) GetPathWithNamespace() string {
+	if x != nil {
+		if x.xxx_hidden_PathWithNamespace != nil {
+			return *x.xxx_hidden_PathWithNamespace
 		}
 		return ""
 	}
@@ -102,13 +133,6 @@ func (x *GitCommit) GetMessage() string {
 	return ""
 }
 
-func (x *GitCommit) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.xxx_hidden_CreatedAt
-	}
-	return nil
-}
-
 func (x *GitCommit) GetUrl() string {
 	if x != nil {
 		if x.xxx_hidden_Url != nil {
@@ -119,76 +143,111 @@ func (x *GitCommit) GetUrl() string {
 	return ""
 }
 
-func (x *GitCommit) GetProvider() string {
+func (x *GitCommit) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
-		if x.xxx_hidden_Provider != nil {
-			return *x.xxx_hidden_Provider
-		}
-		return ""
+		return x.xxx_hidden_CreatedAt
 	}
-	return ""
+	return nil
+}
+
+func (x *GitCommit) SetProvider(v string) {
+	x.xxx_hidden_Provider = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 9)
 }
 
 func (x *GitCommit) SetId(v string) {
 	x.xxx_hidden_Id = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 9)
+}
+
+func (x *GitCommit) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 9)
+}
+
+func (x *GitCommit) SetPathWithNamespace(v string) {
+	x.xxx_hidden_PathWithNamespace = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 9)
 }
 
 func (x *GitCommit) SetAuthorName(v string) {
 	x.xxx_hidden_AuthorName = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 9)
 }
 
 func (x *GitCommit) SetAuthorEmail(v string) {
 	x.xxx_hidden_AuthorEmail = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 9)
 }
 
 func (x *GitCommit) SetMessage(v string) {
 	x.xxx_hidden_Message = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 9)
+}
+
+func (x *GitCommit) SetUrl(v string) {
+	x.xxx_hidden_Url = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 9)
 }
 
 func (x *GitCommit) SetCreatedAt(v *timestamppb.Timestamp) {
 	x.xxx_hidden_CreatedAt = v
 }
 
-func (x *GitCommit) SetUrl(v string) {
-	x.xxx_hidden_Url = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 7)
-}
-
-func (x *GitCommit) SetProvider(v string) {
-	x.xxx_hidden_Provider = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 7)
-}
-
-func (x *GitCommit) HasId() bool {
+func (x *GitCommit) HasProvider() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
 }
 
-func (x *GitCommit) HasAuthorName() bool {
+func (x *GitCommit) HasId() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
 }
 
-func (x *GitCommit) HasAuthorEmail() bool {
+func (x *GitCommit) HasPath() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
 }
 
-func (x *GitCommit) HasMessage() bool {
+func (x *GitCommit) HasPathWithNamespace() bool {
 	if x == nil {
 		return false
 	}
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *GitCommit) HasAuthorName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *GitCommit) HasAuthorEmail() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *GitCommit) HasMessage() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *GitCommit) HasUrl() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
 }
 
 func (x *GitCommit) HasCreatedAt() bool {
@@ -198,95 +257,101 @@ func (x *GitCommit) HasCreatedAt() bool {
 	return x.xxx_hidden_CreatedAt != nil
 }
 
-func (x *GitCommit) HasUrl() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
-}
-
-func (x *GitCommit) HasProvider() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+func (x *GitCommit) ClearProvider() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Provider = nil
 }
 
 func (x *GitCommit) ClearId() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
 	x.xxx_hidden_Id = nil
 }
 
+func (x *GitCommit) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *GitCommit) ClearPathWithNamespace() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_PathWithNamespace = nil
+}
+
 func (x *GitCommit) ClearAuthorName() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
 	x.xxx_hidden_AuthorName = nil
 }
 
 func (x *GitCommit) ClearAuthorEmail() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
 	x.xxx_hidden_AuthorEmail = nil
 }
 
 func (x *GitCommit) ClearMessage() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
 	x.xxx_hidden_Message = nil
+}
+
+func (x *GitCommit) ClearUrl() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Url = nil
 }
 
 func (x *GitCommit) ClearCreatedAt() {
 	x.xxx_hidden_CreatedAt = nil
 }
 
-func (x *GitCommit) ClearUrl() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
-	x.xxx_hidden_Url = nil
-}
-
-func (x *GitCommit) ClearProvider() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
-	x.xxx_hidden_Provider = nil
-}
-
 type GitCommit_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Id          *string
-	AuthorName  *string
-	AuthorEmail *string
-	Message     *string
-	CreatedAt   *timestamppb.Timestamp
-	Url         *string
-	Provider    *string
+	Provider          *string
+	Id                *string
+	Path              *string
+	PathWithNamespace *string
+	AuthorName        *string
+	AuthorEmail       *string
+	Message           *string
+	Url               *string
+	CreatedAt         *timestamppb.Timestamp
 }
 
 func (b0 GitCommit_builder) Build() *GitCommit {
 	m0 := &GitCommit{}
 	b, x := &b0, m0
 	_, _ = b, x
+	if b.Provider != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 9)
+		x.xxx_hidden_Provider = b.Provider
+	}
 	if b.Id != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 9)
 		x.xxx_hidden_Id = b.Id
 	}
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 9)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.PathWithNamespace != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 9)
+		x.xxx_hidden_PathWithNamespace = b.PathWithNamespace
+	}
 	if b.AuthorName != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 9)
 		x.xxx_hidden_AuthorName = b.AuthorName
 	}
 	if b.AuthorEmail != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 9)
 		x.xxx_hidden_AuthorEmail = b.AuthorEmail
 	}
 	if b.Message != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 9)
 		x.xxx_hidden_Message = b.Message
 	}
-	x.xxx_hidden_CreatedAt = b.CreatedAt
 	if b.Url != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 9)
 		x.xxx_hidden_Url = b.Url
 	}
-	if b.Provider != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 7)
-		x.xxx_hidden_Provider = b.Provider
-	}
+	x.xxx_hidden_CreatedAt = b.CreatedAt
 	return m0
 }
 
@@ -295,17 +360,19 @@ var File_proto_commitflow_proto protoreflect.FileDescriptor
 const file_proto_commitflow_proto_rawDesc = "" +
 	"\n" +
 	"\x16proto/commitflow.proto\x12\n" +
-	"commitflow\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe2\x01\n" +
-	"\tGitCommit\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
-	"\vauthor_name\x18\x02 \x01(\tR\n" +
+	"commitflow\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x02\n" +
+	"\tGitCommit\x12\x1a\n" +
+	"\bprovider\x18\x01 \x01(\tR\bprovider\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\x12.\n" +
+	"\x13path_with_namespace\x18\x04 \x01(\tR\x11pathWithNamespace\x12\x1f\n" +
+	"\vauthor_name\x18\x05 \x01(\tR\n" +
 	"authorName\x12!\n" +
-	"\fauthor_email\x18\x03 \x01(\tR\vauthorEmail\x12\x18\n" +
-	"\amessage\x18\x04 \x01(\tR\amessage\x129\n" +
+	"\fauthor_email\x18\x06 \x01(\tR\vauthorEmail\x12\x18\n" +
+	"\amessage\x18\a \x01(\tR\amessage\x12\x10\n" +
+	"\x03url\x18\b \x01(\tR\x03url\x129\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x10\n" +
-	"\x03url\x18\x06 \x01(\tR\x03url\x12\x1a\n" +
-	"\bprovider\x18\a \x01(\tR\bproviderB,Z*github.com/NemanjaTomic57/commitflow/protob\beditionsp\xe9\a"
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB,Z*github.com/NemanjaTomic57/commitflow/protob\beditionsp\xe9\a"
 
 var file_proto_commitflow_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_proto_commitflow_proto_goTypes = []any{

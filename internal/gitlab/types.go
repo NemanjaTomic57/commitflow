@@ -10,6 +10,7 @@ type responseType interface {
 type project struct {
 	ID                     int              `json:"id"`
 	Description            string           `json:"description"`
+	Path                   string           `json:"path"`
 	PathWithNamespace      string           `json:"path_with_namespace"`
 	CreatedAt              string           `json:"created_at"`
 	WebURL                 string           `json:"web_url"`

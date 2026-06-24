@@ -9,24 +9,24 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NemanjaTomic57/commitflow/internal/kafka"
 	"github.com/NemanjaTomic57/commitflow/internal/utils"
+	"github.com/NemanjaTomic57/commitflow/proto"
 )
 
 var baseURL = "https://api.github.com"
 
 // Get all commits for every project.
-func GetAllCommits(messages chan kafka.GitCommit) {
+func GetAllCommits(messages chan *proto.GitCommit) {
 	// Fetch all project IDs
 	repositories := fetchAllProjects()
 
 	// Interate through project IDs and fetch commits for each project
 	for _, repo := range repositories {
-		url := fmt.Sprintf("%s/repos/%s/%s/commits", baseURL, repo.Owner.Login, repo.Name)
+		url := fmt.Sprintf("%s/repos/%s/%s/commits?per_page=100", baseURL, repo.Owner.Login, repo.Name)
 		commits := fetchAPI[commitResponse](url)
 
 		for _, commit := range commits {
-			message := commit.ToGitCommit()
+			message := commit.ToGitCommit(repo)
 			messages <- message
 		}
 	}
@@ -34,7 +34,7 @@ func GetAllCommits(messages chan kafka.GitCommit) {
 
 // Fetches all projects for the authenticated user.
 func fetchAllProjects() []repository {
-	url := baseURL + "/user/repos?per_page=4"
+	url := baseURL + "/user/repos?per_page=1"
 	return fetchAPI[repository](url)
 }
 

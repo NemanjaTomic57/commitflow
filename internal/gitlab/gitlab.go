@@ -22,11 +22,11 @@ func GetAllCommits(messages chan *proto.GitCommit) {
 
 	// Interate through project IDs and fetch commits for each project
 	for _, project := range projects {
-		url := fmt.Sprintf("%s/projects/%d/repository/commits", baseURL, project.ID)
+		url := fmt.Sprintf("%s/projects/%d/repository/commits?per_page=100", baseURL, project.ID)
 		commits := fetchAPI[commit](url)
 
 		for _, commit := range commits {
-			message := commit.ToGitCommit()
+			message := commit.ToGitCommit(project)
 			messages <- message
 		}
 	}

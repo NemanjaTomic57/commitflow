@@ -76,5 +76,4 @@ func main() {
 	if *bootstrapFlag {
 		bootstrap()
 	}
-	// TODO: Implement cronjobs for API requests to Git
 }

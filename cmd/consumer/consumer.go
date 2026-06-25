@@ -39,8 +39,7 @@ ON CONFLICT (provider, id) DO UPDATE SET
 	created_at = EXCLUDED.created_at
 `
 
-func main() {
-	godotenv.Load()
+func migrateDB() {
 	connectionString := os.Getenv("POSTGRES_URL")
 
 	m, err := migrate.New(
@@ -50,23 +49,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("ERROR failed to create migrate instance: %v", err)
 	}
-	if err = m.Up(); err != nil {
-		if err != migrate.ErrNoChange {
+	if err = m.Up(); err != migrate.ErrNoChange {
+		if err != nil {
 			log.Fatalf("ERROR applying database migration failed: %v", err)
 		}
-		log.Println("INFO database is already up to date")
+		log.Println("LOG database migration successful")
+	} else {
+		log.Println("LOG database already migrated")
 	}
-
-	ctx, stop := signal.NotifyContext(
-		context.Background(),
-		os.Interrupt,
-		syscall.SIGTERM,
-	)
-	defer stop()
-
-	go postgresSink(ctx)
-
-	<-ctx.Done()
 }
 
 func postgresSink(ctx context.Context) {
@@ -110,4 +100,21 @@ func postgresSink(ctx context.Context) {
 				err)
 		}
 	}
+}
+
+func main() {
+	godotenv.Load()
+
+	migrateDB()
+
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
+	go postgresSink(ctx)
+
+	<-ctx.Done()
 }

@@ -1,8 +1,8 @@
 # To Do's
 
-- Automate the Grafana dashboards
 - Implement cronjobs for recurring API requests
 - Scale the application to several topics
+- Automate the Grafana dashboards
 
 ## Production
 

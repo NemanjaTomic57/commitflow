@@ -1,5 +1,2 @@
 # Secret variables
 .env
-
-# Vagrant files
-.vagrant/

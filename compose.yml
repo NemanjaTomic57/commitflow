@@ -46,8 +46,11 @@ services:
       POSTGRES_USER: 'postgres'
       POSTGRES_PASSWORD: 'password'
       POSTGRES_DB: 'commitflow'
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', "pg_isready -U postgres -d commitflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   commitflow_default:

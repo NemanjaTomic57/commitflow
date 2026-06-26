@@ -58,9 +58,7 @@ psql -U postgres -h localhost -d commitflow
 The Grafana dashboard is available under http://localhost:3000.
 
 User: admin
-Password: admin
-
-You have to change the password at first login.
+Password: password
 
 ## Bootstrap you data from Git
 

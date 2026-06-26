@@ -44,6 +44,7 @@ services:
       - '5432:5432'
     volumes:
       - postgres:/var/lib/postgresql
+      - ./postgres:/docker-entrypoint-initdb.d
     environment:
       POSTGRES_USER: 'postgres'
       POSTGRES_PASSWORD: 'password'
@@ -62,6 +63,17 @@ services:
       - '3000:3000'
     volumes:
       - grafana:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      GF_SECURITY_ADMIN_USER: 'admin'
+      GF_SECURITY_ADMIN_PASSWORD: 'password'
+      GF_DATABASE_TYPE: 'postgres'
+      GF_DATABASE_HOST: 'db:5432'
+      GF_DATABASE_NAME: 'grafana'
+      GF_DATABASE_USER: 'postgres'
+      GF_DATABASE_PASSWORD: 'password'
+      GF_DATABASE_SSL_MODE: 'disable'
+      GF_AUTH_ANONYMOUS_ENABLED: true
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:3000/api/health']
       interval: 10s

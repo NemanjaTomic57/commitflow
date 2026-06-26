@@ -63,6 +63,7 @@ func fetchAPI[T responseType](url string) []T {
 		}
 		// ...and append.
 		result = append(result, page...)
+		time.Sleep(1 * time.Second)
 	}
 
 	return result

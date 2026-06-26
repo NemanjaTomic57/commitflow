@@ -80,6 +80,8 @@ func postgresSink(ctx context.Context) {
 
 	for {
 		message := <-messages
+		log.Printf("LOG consuming git commit with repository path: %s, message: %v", message.GetPathWithNamespace(), message.GetMessage())
+
 		_, err := db.ExecContext(
 			ctx,
 			query,

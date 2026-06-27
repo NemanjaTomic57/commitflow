@@ -54,10 +54,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 30s
 
   grafana:
     image: grafana/grafana:12.2
     container_name: grafana
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -73,12 +77,34 @@ services:
       GF_DATABASE_USER: 'postgres'
       GF_DATABASE_PASSWORD: 'password'
       GF_DATABASE_SSL_MODE: 'disable'
-      GF_AUTH_ANONYMOUS_ENABLED: true
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:3000/api/health']
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 30s
+
+  grafana-bootstrap:
+    image: curlimages/curl:latest
+    container_name: grafana-bootstrap
+    depends_on:
+      grafana:
+        condition: service_healthy
+    restart: 'no'
+    volumes:
+      - ./grafana/dashboards/git-commits.yml:/git-commits.yml:ro
+    environment:
+      GRAFANA_URL: http://grafana:3000
+    entrypoint: >
+      sh -c '
+        echo "Importing dashboard...";
+        curl --fail \
+          -X POST \
+          -u admin:password \
+          -H "Content-Type: application/yaml" \
+          --data-binary @/git-commits.yml \
+          $$GRAFANA_URL/apis/dashboard.grafana.app/v2beta1/namespaces/default/dashboards;
+      '
 
 volumes:
   kafka: {}

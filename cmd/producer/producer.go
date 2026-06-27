@@ -1,9 +1,13 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"log"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
+	"time"
 
 	"github.com/NemanjaTomic57/commitflow/internal/github"
 	"github.com/NemanjaTomic57/commitflow/internal/gitlab"
@@ -15,7 +19,8 @@ import (
 
 var topic = "git_commits"
 
-func bootstrap() {
+// Fetch all historical commits from Git.
+func bootstrap(producer *ckafka.Producer) {
 	var wg sync.WaitGroup
 	messages := make(chan *proto.GitCommit)
 
@@ -33,25 +38,39 @@ func bootstrap() {
 		close(messages)
 	}()
 
-	producer := kafka.NewProducer()
-
-	// Get results back from producing to Kafka and print to console
-	go handleDeliveryReports(producer)
-
-	// Produce Kafka events for each message
-	var produceWg sync.WaitGroup
-
-	for message := range messages {
-		produceWg.Go(func() {
-			kafka.ProduceEvent(producer, message, topic)
-		})
+	for msg := range messages {
+		kafka.ProduceEvent(producer, msg, topic)
 	}
+}
 
-	// Wait until producer has processed all commits
-	produceWg.Wait()
+// Fetch commits from the last ten minutes only.
+func pollGitAPI(producer *ckafka.Producer) {
+	messages := make(chan *proto.GitCommit)
+	defer close(messages)
 
-	producer.Flush(1000 * 30)
-	producer.Close()
+	for {
+		time.Sleep(10 * time.Second)
+
+		log.Println("starting poll")
+
+		start := time.Now()
+
+		log.Println("calling GetLastCommits")
+		go github.GetLastCommits(messages)
+		log.Println("GetLastCommits returned after", time.Since(start))
+
+		if len(messages) == 0 {
+			log.Println("no messages received from git")
+			continue
+		}
+
+		log.Println("reading channel")
+		for msg := range messages {
+			kafka.ProduceEvent(producer, msg, topic)
+		}
+
+		log.Println("channel closed")
+	}
 }
 
 func handleDeliveryReports(producer *ckafka.Producer) {
@@ -69,11 +88,27 @@ func handleDeliveryReports(producer *ckafka.Producer) {
 
 func main() {
 	godotenv.Load()
-	bootstrapFlag := flag.Bool("bootstrap", false, "Bootstrap infrastructure")
-	flag.Parse()
 
-	// Fetch data data from Git if bootstrapping
-	if *bootstrapFlag {
-		bootstrap()
-	}
+	producer := kafka.NewProducer()
+
+	// Get results back from producing to Kafka and print to console
+	go handleDeliveryReports(producer)
+
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
+	// bootstrap(producer)
+
+	log.Println("LOG bootstrapping historical data from Git is finished")
+
+	go pollGitAPI(producer)
+
+	<-ctx.Done()
+
+	producer.Flush(1000 * 30)
+	producer.Close()
 }

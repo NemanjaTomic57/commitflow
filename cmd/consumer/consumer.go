@@ -107,8 +107,6 @@ func postgresSink(ctx context.Context) {
 func main() {
 	godotenv.Load()
 
-	migrateDB()
-
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
 		os.Interrupt,
@@ -116,7 +114,8 @@ func main() {
 	)
 	defer stop()
 
-	go postgresSink(ctx)
+	migrateDB()
 
+	go postgresSink(ctx)
 	<-ctx.Done()
 }

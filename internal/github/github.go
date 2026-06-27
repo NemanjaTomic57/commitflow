@@ -29,6 +29,26 @@ func GetAllCommits(messages chan *proto.GitCommit) {
 			message := commit.ToGitCommit(repo)
 			messages <- message
 		}
+
+		// sleep to bypass rate limiter
+		time.Sleep(10 * time.Second)
+	}
+}
+
+// Get commits for the past 10 minutes.
+func GetLastCommits(messages chan *proto.GitCommit) {
+	repositories := fetchAllProjects()
+	since := time.Now().UTC().Add(-10 * time.Minute).Format(time.RFC3339)
+
+	for _, repo := range repositories {
+		url := fmt.Sprintf(
+			"%s/repos/%s/%s/commits?since=%s", baseURL, repo.Owner.Login, repo.Name, since)
+		commits := fetchAPI[commitResponse](url)
+
+		for _, commit := range commits {
+			message := commit.ToGitCommit(repo)
+			messages <- message
+		}
 	}
 }
 
@@ -67,7 +87,6 @@ func fetchAPI[T responseType](url string) []T {
 		}
 		// ...and append.
 		result = append(result, page...)
-		time.Sleep(1 * time.Second)
 	}
 
 	return result

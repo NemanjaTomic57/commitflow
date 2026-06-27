@@ -29,6 +29,9 @@ func GetAllCommits(messages chan *proto.GitCommit) {
 			message := commit.ToGitCommit(project)
 			messages <- message
 		}
+
+		// sleep to bypass rate limiter
+		time.Sleep(10 * time.Second)
 	}
 }
 
@@ -63,7 +66,6 @@ func fetchAPI[T responseType](url string) []T {
 		}
 		// ...and append.
 		result = append(result, page...)
-		time.Sleep(1 * time.Second)
 	}
 
 	return result

@@ -10,6 +10,57 @@ The central question driving this project is:
 
 The goal is not only to use Kafka, but to understand how distributed streaming systems are designed, deployed, and operated in production environments.
 
+## Getting Started
+
+### Prerequisites
+
+* Docker Compose
+* Go
+* GitHub Personal Access Token with permissions `repo`
+* GitLab Personal Access Token with permissions `api`
+
+Create your personal access tokens:
+
+* GitHub: https://github.com/settings/tokens
+* GitLab: https://gitlab.com/-/user_settings/personal_access_tokens
+
+Copy the example environment file and add both tokens:
+
+```bash
+cp .env.example .env
+```
+
+### Start the Development Environment
+
+Start Kafka, PostgreSQL, and Grafana:
+
+```bash
+docker compose up -d
+```
+
+### Bootstrap Historical Data
+
+Start the consumer first to initialize the database and begin consuming Kafka topics:
+
+```bash
+go run ./cmd/consumer/consumer.go
+```
+
+In a second terminal, run the producer once with the bootstrap flag to import your complete GitHub and GitLab history:
+
+```bash
+go run ./cmd/producer/producer.go --bootstrap
+```
+
+Within about a minute, your data should appear in Grafana.
+
+### Access Services
+
+| Service    | URL / Command                                 | Credentials             |
+| ---------- | --------------------------------------------- | ----------------------- |
+| Grafana    | http://localhost:3000                         | `admin` / `password`    |
+| PostgreSQL | `psql -U postgres -h localhost -d commitflow` | `postgres` / `password` |
+
 ## Architecture Goals
 
 ### Infrastructure & Deployment
@@ -43,12 +94,11 @@ The goal is not only to use Kafka, but to understand how distributed streaming s
 
 ### Local Development
 
-The development environment will use **Vagrant** to provide:
+The development environment will use **Docker** to provide:
 
-- Kafka cluster
-- Kafka Connect
-- Supporting services
-- Local observability stack
+- Kafka 
+- PostgreSQL
+- Grafana Dashboards
 
 This setup allows rapid experimentation and local testing.
 
@@ -57,17 +107,6 @@ This setup allows rapid experimentation and local testing.
 The production environment will be deployed on **AWS** using Terraform and Ansible for infrastructure automation.
 
 The long-term goal is to create a reproducible and scalable streaming platform suitable for real-world workloads.
-
-## Tech Stack
-
-- **Apache Kafka**
-- **Kafka Connect**
-- **librdkafka**
-- **Vagrant**
-- **Terraform**
-- **Ansible**
-- **Grafana**
-- **MinIO**
 
 ## Learning Objectives
 
@@ -79,7 +118,3 @@ This project aims to build practical experience with:
 - Cloud-native deployment strategies
 - Scalable data pipelines
 - Kafka operations and observability
-
-## Project Status
-
-🚧 Work in progress — the architecture and infrastructure are actively being designed and implemented.

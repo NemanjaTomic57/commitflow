@@ -1,6 +1,5 @@
 # To Do's
 
-- Strip messages from whitespace and newlines
 - Scale the application to several topics
 
 ## Production

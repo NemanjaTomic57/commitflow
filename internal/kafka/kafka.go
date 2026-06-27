@@ -3,6 +3,7 @@ package kafka
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/NemanjaTomic57/commitflow/proto"
@@ -20,10 +21,6 @@ type GitCommit struct {
 	Provider    string    `json:"provider"`
 }
 
-type GitAPIResponse interface {
-	GitCommit
-}
-
 var Topic = "git_commits"
 
 func NewProducer() *kafka.Producer {
@@ -39,6 +36,9 @@ func NewProducer() *kafka.Producer {
 }
 
 func ProduceEvent(producer *kafka.Producer, message *proto.GitCommit, topic string) {
+	// Remove whitespace from commit messages
+	message.SetMessage(strings.TrimSpace(message.GetMessage()))
+
 	messageBytes, err := gproto.Marshal(message)
 	if err != nil {
 		log.Printf("ERROR kafka.ProduceKafkaEvents() -> marshalling object failed: %v", err)

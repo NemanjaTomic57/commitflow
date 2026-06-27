@@ -19,7 +19,7 @@ The goal is not only to use Kafka, but to understand how distributed streaming s
 * GitHub Personal Access Token with permissions `repo`
 * GitLab Personal Access Token with permissions `api`
 
-Create your personal access tokens:
+### Create your personal access tokens
 
 * GitHub: https://github.com/settings/tokens
 * GitLab: https://gitlab.com/-/user_settings/personal_access_tokens

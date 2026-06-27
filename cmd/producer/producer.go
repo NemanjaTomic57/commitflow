@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
+	"flag"
 	"log"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/NemanjaTomic57/commitflow/internal/github"
@@ -17,7 +14,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var topic = "git_commits"
+const topic = "git_commits"
 
 // Fetch all historical commits from Git.
 func bootstrap(producer *ckafka.Producer) {
@@ -45,31 +42,34 @@ func bootstrap(producer *ckafka.Producer) {
 
 // Fetch commits from the last ten minutes only.
 func pollGitAPI(producer *ckafka.Producer) {
-	messages := make(chan *proto.GitCommit)
-	defer close(messages)
+
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
 
 	for {
-		time.Sleep(10 * time.Second)
+		log.Println("LOG pollGitAPI() -> starting to poll")
 
-		log.Println("starting poll")
+		var wg sync.WaitGroup
+		messages := make(chan *proto.GitCommit)
 
-		start := time.Now()
+		wg.Go(func() {
+			gitlab.GetLastCommits(messages)
+		})
 
-		log.Println("calling GetLastCommits")
-		go github.GetLastCommits(messages)
-		log.Println("GetLastCommits returned after", time.Since(start))
+		wg.Go(func() {
+			github.GetLastCommits(messages)
+		})
 
-		if len(messages) == 0 {
-			log.Println("no messages received from git")
-			continue
-		}
+		go func() {
+			wg.Wait()
+			close(messages)
+		}()
 
-		log.Println("reading channel")
 		for msg := range messages {
 			kafka.ProduceEvent(producer, msg, topic)
 		}
 
-		log.Println("channel closed")
+		<-ticker.C
 	}
 }
 
@@ -78,37 +78,33 @@ func handleDeliveryReports(producer *ckafka.Producer) {
 		switch ev := e.(type) {
 		case *ckafka.Message:
 			if ev.TopicPartition.Error != nil {
-				log.Println("ERROR kafka.ProduceKafkaEvents() -> delivery failed:", ev.TopicPartition)
+				log.Println("ERROR handleDeliveryReports() -> delivery failed:", ev.TopicPartition)
 			} else {
-				log.Println("LOG kafka.ProduceKafkaEvents() -> delivered message to:", ev.TopicPartition)
+				log.Println("LOG handleDeliveryReports() -> delivered message to:", ev.TopicPartition)
 			}
 		}
 	}
 }
 
 func main() {
+	bootstrapFlag := flag.Bool("bootstrap", false, "Bootstrap historical Git data")
+	flag.Parse()
+
 	godotenv.Load()
 
 	producer := kafka.NewProducer()
+	defer func() {
+		producer.Flush(1000 * 30)
+		producer.Close()
+	}()
 
 	// Get results back from producing to Kafka and print to console
 	go handleDeliveryReports(producer)
 
-	ctx, stop := signal.NotifyContext(
-		context.Background(),
-		os.Interrupt,
-		syscall.SIGTERM,
-	)
-	defer stop()
+	if *bootstrapFlag {
+		bootstrap(producer)
+		log.Println("LOG bootstrapping historical data from Git is finished")
+	}
 
-	// bootstrap(producer)
-
-	log.Println("LOG bootstrapping historical data from Git is finished")
-
-	go pollGitAPI(producer)
-
-	<-ctx.Done()
-
-	producer.Flush(1000 * 30)
-	producer.Close()
+	pollGitAPI(producer)
 }

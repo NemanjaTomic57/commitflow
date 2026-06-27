@@ -1,8 +1,6 @@
 package kafka
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -71,21 +69,13 @@ func NewConsumer(groupID string) *kafka.Consumer {
 	return consumer
 }
 
-func ConsumeEvent(ctx context.Context, consumer *kafka.Consumer, topic string, messages chan *proto.GitCommit) {
+func ConsumeEvent(consumer *kafka.Consumer, topic string, messages chan *proto.GitCommit) {
 	err := consumer.Subscribe(topic, nil)
 	if err != nil {
 		log.Fatalf("kafka.ConsumeEvent() -> ERROR when subscribing to topic: %v\n", err)
 	}
 
 	for {
-		select {
-		case <-ctx.Done():
-			close(messages)
-			fmt.Printf("\nGraceful exit\n")
-			return
-		default:
-		}
-
 		var message proto.GitCommit
 		event, err := consumer.ReadMessage(time.Millisecond * 100)
 		if err != nil {

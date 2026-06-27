@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/NemanjaTomic57/commitflow/internal/kafka"
 	"github.com/NemanjaTomic57/commitflow/proto"
@@ -65,7 +63,7 @@ func postgresSink(ctx context.Context) {
 	consumer := kafka.NewConsumer("postgres-sink")
 	defer consumer.Close()
 
-	go kafka.ConsumeEvent(ctx, consumer, kafka.Topic, messages)
+	go kafka.ConsumeEvent(consumer, kafka.Topic, messages)
 
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
 	if err != nil {
@@ -107,15 +105,8 @@ func postgresSink(ctx context.Context) {
 func main() {
 	godotenv.Load()
 
-	ctx, stop := signal.NotifyContext(
-		context.Background(),
-		os.Interrupt,
-		syscall.SIGTERM,
-	)
-	defer stop()
-
 	migrateDB()
 
-	go postgresSink(ctx)
-	<-ctx.Done()
+	ctx := context.Background()
+	postgresSink(ctx)
 }

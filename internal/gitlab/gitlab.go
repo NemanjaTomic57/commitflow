@@ -35,6 +35,23 @@ func GetAllCommits(messages chan *proto.GitCommit) {
 	}
 }
 
+// Get commits for the past 10 minutes.
+func GetLastCommits(messages chan *proto.GitCommit) {
+	projects := fetchAllProjects()
+	since := time.Now().UTC().Add(-10 * time.Minute).Format(time.RFC3339)
+
+	for _, project := range projects {
+		url := fmt.Sprintf(
+			"%s/projects/%d/repository/commits?since=%s", baseURL, project.ID, since)
+		commits := fetchAPI[commit](url)
+
+		for _, commit := range commits {
+			message := commit.ToGitCommit(project)
+			messages <- message
+		}
+	}
+}
+
 // Fetches all projects for the authenticated user.
 func fetchAllProjects() []project {
 	url := baseURL + "/projects?membership=true&per_page=1"

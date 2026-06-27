@@ -2,6 +2,7 @@
 
 - Implement cronjobs for recurring API requests
 - Scale the application to several topics
+- Strip messages from whitespace and newlines
 
 ## Production
 

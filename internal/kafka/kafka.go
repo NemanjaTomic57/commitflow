@@ -24,12 +24,12 @@ type GitCommit struct {
 var Topic = "git_commits"
 
 func NewProducer() *kafka.Producer {
-	bootstrapServer := getBootstrapServer()
+		bootstrapServer := getBootstrapServer()
 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": bootstrapServer,
 	})
 	if err != nil {
-		log.Fatalln("ERROR kafka.NewProducer() -> creating Kafka producer failed: %w", err)
+		log.Fatalf("ERROR kafka.NewProducer() -> creating Kafka producer failed: %w", err)
 	}
 
 	return producer

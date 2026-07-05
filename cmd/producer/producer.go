@@ -89,7 +89,9 @@ func main() {
 	bootstrapFlag := flag.Bool("bootstrap", false, "Bootstrap historical Git data")
 	flag.Parse()
 
-	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("ERROR cmd/producer -> failed to load .env file: %v", err)
+	}
 
 	producer := kafka.NewProducer()
 	defer func() {

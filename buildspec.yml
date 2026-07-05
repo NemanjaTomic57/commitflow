@@ -1,12 +1,14 @@
 version: 0.2
 
-run-as: codebuild-user
-
 phases:
+  install:
+    runtime-versions:
+      golang: 1.26
+
   build:
-    run-as: codebuild-user
-    on-failure: ABORT
     commands:
-      - echo "Hello, World!"
+      - test -z "$(gofmt -l .)"
+      - go vet ./...
+      - golangci-lint run
     finally:
       - cat /etc/os-release

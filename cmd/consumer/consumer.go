@@ -61,7 +61,11 @@ func postgresSink(ctx context.Context) {
 	messages := make(chan *proto.GitCommit)
 
 	consumer := kafka.NewConsumer("postgres-sink")
-	defer consumer.Close()
+	defer func() {
+		if err := consumer.Close(); err != nil {
+			log.Printf("ERROR postgresSink() -> failed to close consumer: %v", err)
+		}
+	}()
 
 	go kafka.ConsumeEvent(consumer, kafka.Topic, messages)
 
@@ -69,7 +73,11 @@ func postgresSink(ctx context.Context) {
 	if err != nil {
 		log.Fatalf("ERROR postgresSink() -> could not open database connection: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("ERROR postgresSink() -> failed to database: %v", err)
+		}
+	}()
 
 	err = db.Ping()
 	if err != nil {
@@ -103,7 +111,9 @@ func postgresSink(ctx context.Context) {
 }
 
 func main() {
-	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("ERROR cmd/consumer -> failed to load .env file: %v", err)
+	}
 
 	migrateDB()
 

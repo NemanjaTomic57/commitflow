@@ -10,10 +10,10 @@ datasources:
       password: 'password'
     jsonData:
       database: commitflow
-      sslmode: 'disable' # disable/require/verify-ca/verify-full
+      sslmode: 'disable'  # disable/require/verify-ca/verify-full
       maxOpenConns: 100
       maxIdleConns: 100
       maxIdleConnsAuto: true
       connMaxLifetime: 14400
-      postgresVersion: 1804 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
+      postgresVersion: 1804  # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false

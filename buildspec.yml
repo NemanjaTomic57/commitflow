@@ -1,3 +1,4 @@
+---
 version: 0.2
 
 phases:
@@ -10,5 +11,6 @@ phases:
       - test -z "$(gofmt -l .)"
       - go vet ./...
       - golangci-lint run
+      - yamllint .
     finally:
       - cat /etc/os-release

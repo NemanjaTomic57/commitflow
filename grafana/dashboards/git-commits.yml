@@ -285,8 +285,9 @@ spec:
                       rawQuery: true
                       rawSql: >
                         SELECT created_at, SUM(COUNT(*)) OVER (ORDER BY
-                        created_at) FROM git_commits 
-                            WHERE path_with_namespace = 'NemanjaTomic57/commitflow' GROUP BY created_at;
+                        created_at) FROM git_commits
+                        WHERE path_with_namespace = 'NemanjaTomic57/commitflow'
+                        GROUP BY created_at;
                       sql:
                         columns:
                           - parameters: []
@@ -300,7 +301,8 @@ spec:
                   refId: A
             queryOptions: {}
             transformations: []
-        description: Number of commits over time for repository NemanjaTomic57/commitflow
+        description: >
+          Number of commits over time for repository NemanjaTomic57/commitflow
         id: 4
         links: []
         title: CommitsOverTimeCommitFlow

@@ -42,7 +42,6 @@ func bootstrap(producer *ckafka.Producer) {
 
 // Fetch commits from the last ten minutes only.
 func pollGitAPI(producer *ckafka.Producer) {
-
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 

@@ -29,7 +29,7 @@ func NewProducer() *kafka.Producer {
 		"bootstrap.servers": bootstrapServer,
 	})
 	if err != nil {
-		log.Fatalf("ERROR kafka.NewProducer() -> creating Kafka producer failed: %w", err)
+		log.Fatalln("ERROR kafka.NewProducer() -> creating Kafka producer failed: %w", err)
 	}
 
 	return producer

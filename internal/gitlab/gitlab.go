@@ -73,7 +73,11 @@ func fetchAPI[T responseType](url string) []T {
 
 		// Send []byte of http response to the channel
 		pageResp := utils.ExtractBodyFromHTTPResponse(httpResponse)
-		httpResponse.Body.Close()
+		defer func() {
+			if err := httpResponse.Body.Close(); err != nil {
+				log.Printf("ERROR gitlab.fetchAPI() -> failed to close httpResponse.Body: %v", err)
+			}
+		}()
 
 		// Unmarshal into corresponding object array...
 		var page []T

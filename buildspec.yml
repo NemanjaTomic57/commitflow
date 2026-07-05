@@ -1,0 +1,12 @@
+version: 0.2
+
+run-as: Linux-user-name
+
+phases:
+  build:
+    run-as: ubuntu
+    on-failure: ABORT
+    commands:
+      - echo "Hello, World!"
+    finally:
+      - cat /etc/os-release

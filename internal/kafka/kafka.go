@@ -24,7 +24,7 @@ type GitCommit struct {
 var Topic = "git_commits"
 
 func NewProducer() *kafka.Producer {
-		bootstrapServer := getBootstrapServer()
+	bootstrapServer := getBootstrapServer()
 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": bootstrapServer,
 	})

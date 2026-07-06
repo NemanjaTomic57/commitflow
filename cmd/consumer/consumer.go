@@ -111,9 +111,7 @@ func postgresSink(ctx context.Context) {
 }
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("ERROR cmd/consumer -> failed to load .env file: %v", err)
-	}
+	_ = godotenv.Load()
 
 	migrateDB()
 

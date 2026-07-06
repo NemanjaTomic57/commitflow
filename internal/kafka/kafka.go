@@ -93,6 +93,7 @@ func ConsumeEvent(consumer *kafka.Consumer, topic string, messages chan *proto.G
 
 func getBootstrapServer() string {
 	bootstrapServer := os.Getenv("KAFKA_BOOTSTRAP_SERVER")
+	log.Println(bootstrapServer)
 	if bootstrapServer == "" {
 		log.Fatalln("ERROR kafka.NewProducer() -> KAFKA_BOOTSTRAP_SERVER is not set")
 	}

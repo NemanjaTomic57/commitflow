@@ -86,12 +86,10 @@ func handleDeliveryReports(producer *ckafka.Producer) {
 }
 
 func main() {
+	_ = godotenv.Load()
+
 	bootstrapFlag := flag.Bool("bootstrap", false, "Bootstrap historical Git data")
 	flag.Parse()
-
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("ERROR cmd/producer -> failed to load .env file: %v", err)
-	}
 
 	producer := kafka.NewProducer()
 	defer func() {

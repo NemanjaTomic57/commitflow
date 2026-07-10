@@ -18,11 +18,11 @@ phases:
 
       - whoami
       - id
-      - buildah info
+      - docker info
       - echo $BUILDAH_ISOLATION
       - |
         aws ecr get-login-password --region $AWS_REGION \
-          | buildah login --username AWS --password-stdin $ECR_URI
+          | docker login --username AWS --password-stdin $ECR_URI
     finally:
       - cat /etc/os-release
 
@@ -34,7 +34,7 @@ phases:
       - yamllint .
       - hadolint Dockerfile
 
-      - buildah build -t $ECR_URI:$COMMIT_SHA --format docker .
-      - buildah tag $ECR_URI:$COMMIT_SHA $ECR_URI:latest
-      - buildah push $ECR_URI:$COMMIT_SHA
-      - buildah push $ECR_URI:latest
+      - docker build -t $ECR_URI:$COMMIT_SHA --format docker .
+      - docker tag $ECR_URI:$COMMIT_SHA $ECR_URI:latest
+      - docker push $ECR_URI:$COMMIT_SHA
+      - docker push $ECR_URI:latest

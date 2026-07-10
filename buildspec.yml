@@ -16,7 +16,7 @@ phases:
 
       - |
         aws ecr get-login-password --region $AWS_REGION \
-          | podman login --username --password-stdin $ECR_URI
+          | buildah login --username AWS --password-stdin $ECR_URI
     finally:
       - cat /etc/os-release
 
@@ -28,8 +28,8 @@ phases:
       - yamllint .
       - hadolint Dockerfile
 
-      - podman build -t $ECR_URI:$COMMIT_SHA
-      - podman tag $ECR_URI:$COMMIT_SHA $ECR_URI:latest
-      - podman push $ECR_URI:$COMMIT_SHA
-      - podman push $ECR_URI:latest
+      - buildah build -t $ECR_URI:$COMMIT_SHA --format docker .
+      - buildah tag $ECR_URI:$COMMIT_SHA $ECR_URI:latest
+      - buildah push $ECR_URI:$COMMIT_SHA
+      - buildah push $ECR_URI:latest
       

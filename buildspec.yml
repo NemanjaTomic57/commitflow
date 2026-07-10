@@ -28,8 +28,8 @@ phases:
       - yamllint .
       - hadolint Dockerfile
 
-      - docker build -t $ECR_URI:$COMMIT_SHA
-      - docker tag $ECR_URI:$COMMIT_SHA $ECR_URI:latest
-      - docker push $ECR_URI:$COMMIT_SHA
-      - docker push $ECR_URI:latest
+      - podman build -t $ECR_URI:$COMMIT_SHA
+      - podman tag $ECR_URI:$COMMIT_SHA $ECR_URI:latest
+      - podman push $ECR_URI:$COMMIT_SHA
+      - podman push $ECR_URI:latest
       

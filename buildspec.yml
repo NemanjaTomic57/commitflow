@@ -11,7 +11,8 @@ phases:
     commands:
       - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
       - COMMIT_SHA=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
-      - ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+      - ACCOUNT_ID=$(aws sts get-caller-identity \
+          --query 'Account' --output text)
       - ECR_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY
 
       - whoami
@@ -24,7 +25,7 @@ phases:
     finally:
       - cat /etc/os-release
 
-  build: 
+  build:
     commands:
       - test -z "$(gofmt -l .)"
       - go vet ./...
@@ -36,4 +37,3 @@ phases:
       - buildah tag $ECR_URI:$COMMIT_SHA $ECR_URI:latest
       - buildah push $ECR_URI:$COMMIT_SHA
       - buildah push $ECR_URI:latest
-      

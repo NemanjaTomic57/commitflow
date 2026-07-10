@@ -18,8 +18,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
 RUN apt-get update \
-  # && apt-get install -y --no-install-recommends ca-certificates=20250419 \
-  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get install -y --no-install-recommends ca-certificates=20250419 \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /out/producer /usr/local/bin/producer

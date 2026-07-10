@@ -12,5 +12,6 @@ phases:
       - go vet ./...
       - golangci-lint run
       - yamllint .
+      - hadolint Dockerfile
     finally:
       - cat /etc/os-release

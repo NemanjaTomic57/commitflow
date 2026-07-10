@@ -8,8 +8,8 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /out/producer ./cmd/producer/producer.go
-RUN go build -o /out/consumer ./cmd/consumer/consumer.go
+RUN go build -o /out/producer ./cmd/producer/producer.go \
+  && go build -o /out/consumer ./cmd/consumer/consumer.go
 
 FROM debian:trixie-slim AS app
 
@@ -17,7 +17,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y ca-certificates
+RUN apt-get update \
+  # && apt-get install -y --no-install-recommends ca-certificates=20250419 \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /out/producer /usr/local/bin/producer
 COPY --from=builder /out/consumer /usr/local/bin/consumer

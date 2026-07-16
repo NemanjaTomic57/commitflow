@@ -25,7 +25,7 @@ ansible-playbook \
   ansible-playbook.yml \
   --vault-password-file <(
     aws ssm get-parameter \
-      --name /commitflow/ansible-vault-password \
+      --name /commitflow/passwords/ansible-vault \
       --query "Parameter.Value" \
       --output text --with-decryption
     )

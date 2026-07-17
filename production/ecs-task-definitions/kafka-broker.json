@@ -1,0 +1,55 @@
+{
+  "family": "kafka-broker",
+  "runtimePlatform": { "operatingSystemFamily": "LINUX" },
+  "taskRoleArn": "",
+  "executionRoleArn": "arn:aws:iam::761018874759:role/service-role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "kafka-broker",
+      "image": "apache/kafka:4.2.1",
+      "portMappings": [
+        {
+          "containerPort": 9092,
+          "hostPort": 9092,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::commitflow-761018874759/env/kafka-broker.env",
+          "type": "s3"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/kafka-broker",
+          "awslogs-region": "eu-central-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:19092 --list >/dev/null 2>&1"
+        ],
+        "interval": 10,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      }
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "tags": [
+    {
+      "key": "Name",
+      "value": "CommitFlowKafkaBroker"
+    }
+  ],
+  "pidMode": "task"
+}

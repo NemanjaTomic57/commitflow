@@ -4,126 +4,230 @@ Description: >
   CommitFlow EC2 infrastructure running Docker Compose on Amazon Linux 2023.
 
 Parameters:
-
-  InstanceType:
+  VpcCidr:
     Type: String
-    Default: t3.large
+    Default: '10.100.0.0/16'
+    Description: CIDR block for the VPC
+
+  PublicSubnet1Cidr:
+    Type: String
+    Default: '10.100.1.0/24'
+    Description: CIDR block for public subnet 1
+
+  PublicSubnet2Cidr:
+    Type: String
+    Default: '10.100.2.0/24'
+    Description: CIDR block for public subnet 2
+
+  PrivateSubnet1Cidr:
+    Type: String
+    Default: '10.100.3.0/24'
+    Description: CIDR block for private subnet 1
+
+  PrivateSubnet2Cidr:
+    Type: String
+    Default: '10.100.4.0/24'
+    Description: CIDR block for private subnet 2
 
   KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Existing EC2 Key Pair
     Default: aws
 
-  AmiId:
-    Type: String
-    Description: Debian Trixie AMI ID for eu-central-1 (custom)
-    Default: ami-0c5b8b69f48b05e46
-
 Resources:
 
-# -----------------------------
-# Networking
-# -----------------------------
-
+  # VPC and Networking
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.100.0.0/16
+      CidrBlock: !Ref VpcCidr
       EnableDnsHostnames: true
       EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-vpc'
 
+  # Internet Gateway
   InternetGateway:
     Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-igw'
 
-  AttachGateway:
+  InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
 
-  PublicSubnet:
+  # Public Subnets for ALB
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: eu-central-1a
       VpcId: !Ref VPC
-      CidrBlock: 10.100.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PublicSubnet1Cidr
       MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-public-subnet-1'
 
-  RouteTable:
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PublicSubnet2Cidr
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-public-subnet-2'
+
+  # Private Subnets for ECS Tasks
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PrivateSubnet1Cidr
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-private-subnet-1'
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PrivateSubnet2Cidr
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-private-subnet-2'
+
+  # NAT Gateways for private subnet internet access
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-nat-eip-1'
+
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-nat-eip-2'
+
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-nat-1'
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      SubnetId: !Ref PublicSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-nat-2'
+
+  # Route Tables
+  PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-
-  DefaultRoute:
-    Type: AWS::EC2::Route
-    DependsOn: AttachGateway
-    Properties:
-      RouteTableId: !Ref RouteTable
-      GatewayId: !Ref InternetGateway
-      DestinationCidrBlock: 0.0.0.0/0
-
-  RouteAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref RouteTable
-      SubnetId: !Ref PublicSubnet
-
-# -----------------------------
-# Security Group
-# -----------------------------
-
-  CommitFlowSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: CommitFlow EC2 Security Group
-      VpcId: !Ref VPC
-
-      SecurityGroupIngress:
-
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-
-        - IpProtocol: tcp
-          FromPort: 3000
-          ToPort: 3000
-          CidrIp: 0.0.0.0/0
-
-      SecurityGroupEgress:
-        
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-
-# -----------------------------
-# EC2
-# -----------------------------
-
-  CommitFlowInstance:
-    Type: AWS::EC2::Instance
-
-    Properties:
-      ImageId: !Ref AmiId
-      InstanceType: !Ref InstanceType
-      SecurityGroupIds: [!Ref CommitFlowSecurityGroup]
-      SubnetId: !Ref PublicSubnet
-      KeyName: !Ref KeyPair
-      IamInstanceProfile: EC2CommitFlowRole
       Tags:
         - Key: Name
-          Value: CommitFlow
+          Value: !Sub '${AWS::StackName}-public-routes'
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-private-routes-1'
+
+  DefaultPrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-private-routes-2'
+
+  DefaultPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
 
 Outputs:
-  
-  PublicIP:
-    Value: !GetAtt CommitFlowInstance.PublicIp
+  VPCId:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: !Sub '${AWS::StackName}-VPC-ID'
 
-  PublicDNS:
-    Value: !GetAtt CommitFlowInstance.PublicDnsName
+  PrivateSubnet1:
+    Description: Private Subnet 1 ID
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub '${AWS::StackName}-Private-Subnet-1'
+
+  PrivateSubnet2:
+    Description: Private Subnet 2 ID
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub '${AWS::StackName}-Private-Subnet-2'

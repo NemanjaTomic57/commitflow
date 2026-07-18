@@ -2,7 +2,7 @@
   "family": "grafana",
   "runtimePlatform": { "operatingSystemFamily": "LINUX" },
   "taskRoleArn": "",
-  "executionRoleArn": "arn:aws:iam::761018874759:role/service-role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::761018874759:role/ECSCommitFlowTaskExecutionRole",
   "networkMode": "awsvpc",
   "containerDefinitions": [
     {
@@ -35,9 +35,9 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/grafana",
+          "awslogs-group": "/ecs/commitflow",
           "awslogs-region": "eu-central-1",
-          "awslogs-stream-prefix": "ecs"
+          "awslogs-stream-prefix": "grafana"
         }
       },
       "healthCheck": {

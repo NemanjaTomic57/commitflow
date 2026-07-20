@@ -10,8 +10,9 @@
       "image": "apache/kafka:4.2.1",
       "portMappings": [
         {
-          "containerPort": 9092,
-          "hostPort": 9092,
+          "name": "broker",
+          "containerPort": 19092,
+          "hostPort": 19092,
           "protocol": "tcp"
         }
       ],
@@ -33,7 +34,7 @@
       "healthCheck": {
         "command": [
           "CMD-SHELL",
-          "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:19092 --list >/dev/null 2>&1"
+          "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"
         ],
         "interval": 10,
         "timeout": 5,
@@ -43,8 +44,8 @@
     }
   ],
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "256",
-  "memory": "512",
+  "cpu": "2048",
+  "memory": "4096",
   "tags": [
     {
       "key": "Name",

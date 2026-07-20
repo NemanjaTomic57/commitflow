@@ -33,7 +33,7 @@ services:
         - 'CMD-SHELL'
         - >
           /opt/kafka/bin/kafka-topics.sh --bootstrap-server
-          localhost:19092 --list >/dev/null 2>&1
+          broker:19092 --list >/dev/null 2>&1
       interval: 10s
       timeout: 5s
       retries: 3

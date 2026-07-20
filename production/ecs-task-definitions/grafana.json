@@ -1,7 +1,7 @@
 {
-  "family": "grafana",
+  "family": "commitflow-grafana",
   "runtimePlatform": { "operatingSystemFamily": "LINUX" },
-  "taskRoleArn": "",
+  "taskRoleArn": "arn:aws:iam::761018874759:role/ECSCommitFlowTaskRole",
   "executionRoleArn": "arn:aws:iam::761018874759:role/ECSCommitFlowTaskExecutionRole",
   "networkMode": "awsvpc",
   "containerDefinitions": [

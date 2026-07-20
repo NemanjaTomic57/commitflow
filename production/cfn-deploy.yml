@@ -31,8 +31,38 @@ Parameters:
 
   KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: Existing EC2 Key Pair
     Default: aws
+    Description: Existing EC2 Key Pair
+
+  TaskDefinitionBroker:
+    Type: String
+    Default: arn:aws:ecs:eu-central-1:761018874759:task-definition/commitflow-broker:3
+    Description:  Full ARN of the task definition for Broker
+
+  TaskDefinitionProducer:
+    Type: String
+    Default: arn:aws:ecs:eu-central-1:761018874759:task-definition/commitflow-producer:2
+    Description:  Full ARN of the task definition for CommitFlow producer
+
+  GrafanaContainerPort:
+    Type: Number
+    Default: 3000
+    Description: Port on which the Grafana container listens
+
+  DesiredCount:
+    Type: Number
+    Default: 2
+    Description: Desired number of tasks
+  
+  MinCapacity:
+    Type: Number
+    Default: 1
+    Description: Minimum number of tasks for auto scaling
+  
+  MaxCapacity:
+    Type: Number
+    Default: 10
+    Description: Maximum number of tasks for auto scaling
 
 Resources:
 
@@ -253,6 +283,114 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-ecs-sg'
+
+  # Application Load Balancer
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${AWS::StackName}-alb'
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-alb'
+
+  ALBTargetGroupGrafana:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${AWS::StackName}-tg-grafana'
+      Port: !Ref GrafanaContainerPort
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /api/health
+      HealthCheckEndpoint: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 5
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-tg-grafana'
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  # ECS Cluster
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${AWS::StackName}-cluster'
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+        - CapacityProvider: FARGATE_SPOT
+          Weight: 4
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-cluster'
+
+  # CloudWatch Log Group
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${AWS::StackName}'
+      RetentionInDays: 1
+
+  # ECS Service
+  ECSServiceBroker:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub '${AWS::StackName}-service-broker'
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref TaskDefinitionBroker
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      PlatformVersion: LATEST
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !Ref ECSSecurityGroup
+          Subnet:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      EnableExecuteCommand: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-service-broker'
+
+  ECSServiceCommitFlowProducer:
+    Type: AWS::ECS::Service
+    DependsOn: ECSServiceBroker
+    Properties:
+      ServiceName: !Sub '${AWS::StackName}-service-producer'
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref TaskDefinitionProducer
 
 Outputs:
   VPCId:

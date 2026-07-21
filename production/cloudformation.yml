@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
 Description: >
-  CommitFlow EC2 infrastructure running Docker Compose on Amazon Linux 2023.
+  CommitFlow on ECS with RDS database
 
 Parameters:
   VpcCidr:
@@ -29,40 +29,20 @@ Parameters:
     Default: '10.100.4.0/24'
     Description: CIDR block for private subnet 2
 
-  KeyPair:
-    Type: AWS::EC2::KeyPair::KeyName
-    Default: aws
-    Description: Existing EC2 Key Pair
-
-  TaskDefinitionBroker:
+  CloudMapNamespace:
     Type: String
-    Default: arn:aws:ecs:eu-central-1:761018874759:task-definition/commitflow-broker:3
-    Description:  Full ARN of the task definition for Broker
+    Default: commitflow
+    Description: Namespace for Cloud Map
 
   TaskDefinitionProducer:
     Type: String
-    Default: arn:aws:ecs:eu-central-1:761018874759:task-definition/commitflow-producer:2
+    Default: arn:aws:ecs:eu-central-1:761018874759:task-definition/commitflow-producer:6
     Description:  Full ARN of the task definition for CommitFlow producer
 
   GrafanaContainerPort:
     Type: Number
     Default: 3000
     Description: Port on which the Grafana container listens
-
-  DesiredCount:
-    Type: Number
-    Default: 2
-    Description: Desired number of tasks
-  
-  MinCapacity:
-    Type: Number
-    Default: 1
-    Description: Minimum number of tasks for auto scaling
-  
-  MaxCapacity:
-    Type: Number
-    Default: 10
-    Description: Maximum number of tasks for auto scaling
 
 Resources:
 
@@ -310,7 +290,7 @@ Resources:
       TargetType: ip
       HealthCheckIntervalSeconds: 30
       HealthCheckPath: /api/health
-      HealthCheckEndpoint: HTTP
+      HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 5
@@ -323,7 +303,7 @@ Resources:
     Properties:
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref ALBTargetGroup
+          TargetGroupArn: !Ref ALBTargetGroupGrafana
       LoadBalancerArn: !Ref ApplicationLoadBalancer
       Port: 80
       Protocol: HTTP
@@ -356,13 +336,13 @@ Resources:
       RetentionInDays: 1
 
   # ECS Service
-  ECSServiceBroker:
+  ECSServiceCommitFlowProducer:
     Type: AWS::ECS::Service
+    DependsOn: AmazonMSK
     Properties:
-      ServiceName: !Sub '${AWS::StackName}-service-broker'
+      ServiceName: !Sub '${AWS::StackName}-service-producer'
       Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref TaskDefinitionBroker
-      DesiredCount: !Ref DesiredCount
+      TaskDefinition: !Ref TaskDefinitionProducer
       LaunchType: FARGATE
       PlatformVersion: LATEST
       NetworkConfiguration:
@@ -370,7 +350,7 @@ Resources:
           AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref ECSSecurityGroup
-          Subnet:
+          Subnets:
             - !Ref PrivateSubnet1
             - !Ref PrivateSubnet2
       DeploymentConfiguration:
@@ -380,17 +360,12 @@ Resources:
           Enable: true
           Rollback: true
       EnableExecuteCommand: true
+      ServiceConnectConfiguration:
+        Enabled: true
+        Namespace: commitflow
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-service-broker'
-
-  ECSServiceCommitFlowProducer:
-    Type: AWS::ECS::Service
-    DependsOn: ECSServiceBroker
-    Properties:
-      ServiceName: !Sub '${AWS::StackName}-service-producer'
-      Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref TaskDefinitionProducer
 
 Outputs:
   VPCId:
@@ -410,3 +385,21 @@ Outputs:
     Value: !Ref PrivateSubnet2
     Export:
       Name: !Sub '${AWS::StackName}-Private-Subnet-2'
+
+  LoadBalancerURL:
+    Description: URL of the Application Load Balancer
+    Value: !Sub 'http://${ApplicationLoadBalancer.DNSName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ALB-URL'
+
+  ECSClusterName:
+    Description: Name of the ECS Cluster
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub '${AWS::StackName}-ECS-Cluster'
+
+  ECSServiceCommitFlowProducerName:
+    Description: Name of the ECS CommitFlow Producer Service
+    Value: !GetAtt ECSServiceCommitFlowProducer.Name
+    Export:
+      Name: !Sub '${AWS::StackName}-ECS-Service-CommitFlow-Producer'

@@ -17,7 +17,15 @@ for file in "$DIR"/*.json; do
     filename=$(basename "$file")
 
     echo "Registering ${filename}..."
-    aws ecs register-task-definition --cli-input-json file://"${filename}" --output off
+
+    arn=$(
+        aws ecs register-task-definition \
+            --cli-input-json "file://${file}" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text
+    )
+
+    echo "  ARN: ${arn}"
 done
 
 echo "Done."

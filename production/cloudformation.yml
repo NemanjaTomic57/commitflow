@@ -34,6 +34,11 @@ Parameters:
     Default: commitflow
     Description: Namespace for Cloud Map
 
+  EC2ImageId:
+    Type: AWS::EC2::Image::Id
+    Default: ami-0c5b8b69f48b05e46
+    Description: Debian Trixie image made with HashiCorp Packer
+
   TaskDefinitionProducer:
     Type: String
     Default: arn:aws:ecs:eu-central-1:761018874759:task-definition/commitflow-producer:6
@@ -43,6 +48,18 @@ Parameters:
     Type: Number
     Default: 3000
     Description: Port on which the Grafana container listens
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Existing EC2 Key Pair
+    Default: aws
+
+Mappings:
+  InstanceToInstanceType:
+    bastion:
+      InstanceType: t4g.micro
+    kafka:
+      InstanceType: t4g.medium
 
 Resources:
 
@@ -244,18 +261,58 @@ Resources:
         - Key: Name
           Value: !Sub '${AWS::StackName}-alb-sg'
 
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${AWS::StackName}-bastion-sg'
+      GroupDescription: Security group for Application Load Balancer
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: Allow SSH
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-bastion-sg'
+
+  KafkaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${AWS::StackName}-kafka-sg'
+      GroupDescription: Security group for Kafka nodes
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref BastionSecurityGroup
+          Description: Allow SSH traffic from Bastion
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-kafka-sg'
+
   ECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub '${AWS::StackName}-ecs-sg'
-      GroupDescription: Security group for Application Load Balancer
+      GroupDescription: Security group for ECS cluster
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3000
           ToPort: 3000
           SourceSecurityGroupId: !Ref ALBSecurityGroup
-          Description: Allow traffic from ALB
+          Description: Allow traffic from ALB to Grafana
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
@@ -308,6 +365,56 @@ Resources:
       Port: 80
       Protocol: HTTP
 
+  # Cloud Map
+  CloudMap:
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+    Properties:
+      Name: !Ref CloudMapNamespace
+      Vpc: !Ref VPC
+      Tags: 
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-cloudmap'
+
+  # EC2 Instances
+  Bastion:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2ImageId
+      InstanceType: !FindInMap [InstanceToInstanceType, 'bastion', InstanceType]
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref BastionSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+      Tags: 
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ec2-bastion'
+
+  KafkaNode1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2ImageId
+      InstanceType: !FindInMap [InstanceToInstanceType, 'kafka', InstanceType]
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref KafkaSecurityGroup
+      SubnetId: !Ref PrivateSubnet1
+      Tags: 
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ec2-kafka-node-1'
+
+  KafkaNode2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref EC2ImageId
+      InstanceType: !FindInMap [InstanceToInstanceType, 'kafka', InstanceType]
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref KafkaSecurityGroup
+      SubnetId: !Ref PrivateSubnet2
+      Tags: 
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ec2-kafka-node-2'
+
   # ECS Cluster
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -338,7 +445,6 @@ Resources:
   # ECS Service
   ECSServiceCommitFlowProducer:
     Type: AWS::ECS::Service
-    DependsOn: AmazonMSK
     Properties:
       ServiceName: !Sub '${AWS::StackName}-service-producer'
       Cluster: !Ref ECSCluster
@@ -362,10 +468,10 @@ Resources:
       EnableExecuteCommand: true
       ServiceConnectConfiguration:
         Enabled: true
-        Namespace: commitflow
+        Namespace: !Ref CloudMapNamespace
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-service-broker'
+          Value: !Sub '${AWS::StackName}-service-producer'
 
 Outputs:
   VPCId:

@@ -23,3 +23,7 @@ module "vpc" {
     "10.100.17.0/24"
   ]
 }
+
+module "kafka_cluster" {
+  source =
+}

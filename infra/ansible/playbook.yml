@@ -1,6 +1,6 @@
 ---
 - name: Install Kafka and add to PATH
-  hosts: all
+  hosts: kafka
   vars:
     # Installation path (use in inventory file)
     kafka: "/opt/kafka"
@@ -59,3 +59,9 @@
         mode: "0755"
 
 - name: Configure Kafka brokers
+  gather_facts: false
+  hosts: kafka
+
+  tasks:
+    - name: Copy broker configuration
+      

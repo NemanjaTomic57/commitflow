@@ -78,6 +78,7 @@ locals {
   kafka_nodes = {
     node-1 = var.private_subnet_ids[0]
     node-2 = var.private_subnet_ids[1]
+    node-3 = var.private_subnet_ids[2]
   }
 }
 

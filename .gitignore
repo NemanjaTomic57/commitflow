@@ -2,7 +2,7 @@
 .env
 
 # Ansible inventory is dynamically created
-ansible-inventory.yml
+inventory.yml
 
 # Terraform
 .terraform/

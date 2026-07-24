@@ -1,6 +1,6 @@
 # Infrastructure as Code for CommitFlow
 
-This directory contains the Infrastructure as Code (IaC) for the CommitFlow project. Infrastructure is provisioned with Terraform, while Kafka is configured using Ansible.
+This repository contains the Infrastructure as Code (IaC) for the CommitFlow project. Infrastructure is provisioned with Terraform, while Kafka is configured using Ansible.
 
 Since the ECS services depend on a running Kafka cluster, the infrastructure is provisioned in three sequential steps:
 

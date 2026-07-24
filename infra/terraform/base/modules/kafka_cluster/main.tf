@@ -81,7 +81,7 @@ locals {
   }
 }
 
-resource "aws_instance" "bastion" {
+resource "aws_instance" "kafka" {
   for_each = local.kafka_nodes
 
   ami                    = var.ami_id
@@ -91,6 +91,6 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = [aws_security_group.kafka.id]
 
   tags = {
-    Name = "${var.name}-ec2-kafka-${each.key}"
+    Name = "${var.name}-kafka-${each.key}"
   }
 }

@@ -25,5 +25,12 @@ module "vpc" {
 }
 
 module "kafka_cluster" {
-  source =
+  source = "./modules/kafka_cluster"
+
+  name               = "commitflow"
+  ami_id             = "ami-0723bff07f72bb394"
+  key_name           = "aws"
+  vpc_id             = module.vpc.vpc_id
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
 }

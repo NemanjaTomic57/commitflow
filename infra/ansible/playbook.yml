@@ -1,7 +1,0 @@
----
-- name: Check connectivity
-  hosts: all
-  tasks:
-    - name: Debug
-      debug:
-        var: hostvars

@@ -1,14 +1,13 @@
-#!/bin/bash -xeu
+#!/usr/bin/env bash
+set -euo pipefail
 
-DIR=$(pwd)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-cd "${DIR}"/00_base
+terraform -chdir="${SCRIPT_DIR}/00_base" apply -auto-approve
 
-terraform apply -destroy -auto-approve
-terraform apply -auto-approve
-
-cd ansible
+cd "${SCRIPT_DIR}/00_base/ansible"
 
 python build_inventory.py
-
 ansible-playbook -i inventory.yml playbook.yml
+
+terraform -chdir="${SCRIPT_DIR}/01_ecs" apply -auto-approve

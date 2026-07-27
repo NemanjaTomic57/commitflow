@@ -1,7 +1,8 @@
-#!/bin/bash -xeu
+#!/usr/bin/env bash
+set -euo pipefail
 
-DIR=$(pwd)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-cd "${DIR}"/terraform/base
+terraform -chdir="${SCRIPT_DIR}/01_ecs" apply -destroy -auto-approve
 
-terraform apply -destroy -auto-approve
+terraform -chdir="${SCRIPT_DIR}/00_base" apply -destroy -auto-approve

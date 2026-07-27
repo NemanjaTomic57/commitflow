@@ -2,7 +2,7 @@
 
 DIR=$(pwd)
 
-cd "${DIR}"/terraform/00_base
+cd "${DIR}"/00_base
 
 terraform apply -destroy -auto-approve
 terraform apply -auto-approve

@@ -21,7 +21,7 @@ def terraform_output():
         ["terraform", "output", "-json"],
         capture_output=True,
         text=True,
-        cwd="../terraform/base",
+        cwd="./..",
         check=True,
     )
 

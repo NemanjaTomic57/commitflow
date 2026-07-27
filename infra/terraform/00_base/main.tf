@@ -1,15 +1,19 @@
 terraform {
   backend "s3" {
     bucket = "terraform-761018874759"
-    key    = "commitflow.tfstate"
+    key    = "commitflow-base.tfstate"
     region = "eu-central-1"
   }
+}
+
+locals {
+  name = "commitflow"
 }
 
 module "vpc" {
   source = "./modules/vpc"
 
-  name = "commitflow"
+  name = local.name
 
   vpc_cidr = "10.100.0.0/16"
 
@@ -29,7 +33,7 @@ module "vpc" {
 module "kafka_cluster" {
   source = "./modules/kafka_cluster"
 
-  name               = "commitflow"
+  name               = local.name
   ami_id             = "ami-0723bff07f72bb394"
   key_name           = "aws"
   vpc_id             = module.vpc.vpc_id

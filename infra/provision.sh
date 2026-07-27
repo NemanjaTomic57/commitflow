@@ -2,12 +2,12 @@
 
 DIR=$(pwd)
 
-cd "${DIR}"/terraform/base
+cd "${DIR}"/terraform/00_base
 
 terraform apply -destroy -auto-approve
 terraform apply -auto-approve
 
-cd "$DIR"/ansible
+cd ansible
 
 python build_inventory.py
 

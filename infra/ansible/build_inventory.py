@@ -89,6 +89,13 @@ def build_inventory(tf):
                     "-o StrictHostKeyChecking=no "
                     f"-W %h:%p {ANSIBLE_USER}@{bastion_ip}\""
                 ),
+
+                "kafka": "/opt/kafka",
+                "kafka_logs": "{{ kafka }}/logs",
+                "kafka_bin": "{{ kafka }}/bin",
+                "kafka_config": "{{ kafka }}/config",
+                "kafka_config_server": "{{ kafka_config }}/server.properties",
+                "kafka_cluster_uuid": "9QRITYyyS2qeAIfDgxB3OA"
             },
             "children": {
                 "kafka": {
@@ -103,8 +110,14 @@ def build_inventory(tf):
         inventory["all"]["children"]["kafka"]["hosts"][name] = {
             "ansible_host": ip
         }
+        ssh_command(bastion_ip, ip)
+
 
     return inventory
+
+
+def ssh_command(bastion: str, kafka_node: str) -> None:
+    print(f'ssh -i ~/.ssh/aws.pem -o ProxyCommand="ssh -i ~/.ssh/aws.pem -W %h:%p admin@{bastion}" admin@{kafka_node}')
 
 
 def main():

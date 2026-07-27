@@ -41,6 +41,14 @@ resource "aws_security_group" "kafka" {
     security_groups = [aws_security_group.bastion.id]
   }
 
+  ingress {
+    description = "Allow Kafka traffic from Kafka nodes"
+    protocol    = "tcp"
+    from_port   = 9092
+    to_port     = 9093
+    self        = true
+  }
+
   egress {
     description = "Allow all outbound traffic"
     protocol    = "-1"

@@ -22,15 +22,15 @@ output "private_subnet_ids" {
 
 output "bastion_public_ip" {
   description = "Public IP address of the bastion"
-  value       = module.kafka_cluster.bastion_public_ip
+  value       = module.kafka.bastion_public_ip
 }
 
 output "kafka_private_ips" {
   description = "Private IP addresses of Kafka nodes"
-  value       = module.kafka_cluster.kafka_private_ips
+  value       = module.kafka.kafka_private_ips
 }
 
 output "kafka_bootstrap_server" {
   description = "IP addresses for the Kafka bootstrap server"
-  value       = module.kafka_cluster.kafka_bootstrap_server
+  value       = module.kafka.kafka_bootstrap_server
 }

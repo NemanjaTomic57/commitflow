@@ -30,8 +30,8 @@ module "vpc" {
   ]
 }
 
-module "kafka_cluster" {
-  source = "./modules/kafka_cluster"
+module "kafka" {
+  source = "./modules/kafka"
 
   name               = local.name
   ami_id             = "ami-0723bff07f72bb394"

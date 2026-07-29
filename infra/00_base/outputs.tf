@@ -17,13 +17,17 @@ output "private_subnet_ids" {
 }
 
 ##################################################
-# Kafka cluster
+# NAT Instances
 ##################################################
 
-output "bastion_public_ip" {
-  description = "Public IP address of the bastion"
-  value       = module.kafka.bastion_public_ip
+output "nat_public_ips" {
+  description = "Public IP addresses of NAT instances"
+  value       = module.nat.nat_public_ips
 }
+
+##################################################
+# Kafka Cluster
+##################################################
 
 output "kafka_private_ips" {
   description = "Private IP addresses of Kafka nodes"

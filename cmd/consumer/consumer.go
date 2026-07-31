@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -37,12 +38,39 @@ ON CONFLICT (provider, id) DO UPDATE SET
 	created_at = EXCLUDED.created_at
 `
 
-func migrateDB() {
-	connectionString := os.Getenv("POSTGRES_URL")
+func getConnectionString() (string, error) {
+	address := os.Getenv("DB_ADDRESS")
+	port := os.Getenv("DB_PORT")
+	name := os.Getenv("DB_NAME")
+	username := os.Getenv("DB_USERNAME")
+	password := os.Getenv("DB_PASSWORD")
 
+	errorMessage := "environment file is missing %v parameter"
+
+	switch {
+	case username == "":
+		return "", fmt.Errorf(errorMessage, "username")
+	case password == "":
+		return "", fmt.Errorf(errorMessage, "passwod")
+	case address == "":
+		return "", fmt.Errorf(errorMessage, "address")
+	case port == "":
+		return "", fmt.Errorf(errorMessage, "port")
+	case name == "":
+		return "", fmt.Errorf(errorMessage, "name")
+	}
+
+	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable",
+		username, password, address, port, name)
+
+	fmt.Println(connString)
+	return connString, nil
+}
+
+func migrateDB(connString string) {
 	m, err := migrate.New(
 		"file://migrations",
-		connectionString,
+		connString,
 	)
 	if err != nil {
 		log.Fatalf("ERROR failed to create migrate instance: %v", err)
@@ -57,7 +85,7 @@ func migrateDB() {
 	}
 }
 
-func postgresSink(ctx context.Context) {
+func postgresSink(ctx context.Context, connString string) {
 	messages := make(chan *proto.GitCommit)
 
 	consumer := kafka.NewConsumer("postgres-sink")
@@ -69,13 +97,13 @@ func postgresSink(ctx context.Context) {
 
 	go kafka.ConsumeEvent(consumer, kafka.Topic, messages)
 
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
+	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		log.Fatalf("ERROR postgresSink() -> could not open database connection: %v", err)
 	}
 	defer func() {
 		if err := db.Close(); err != nil {
-			log.Printf("ERROR postgresSink() -> failed to database: %v", err)
+			log.Printf("ERROR postgresSink() -> failed to close database connection: %v", err)
 		}
 	}()
 
@@ -113,8 +141,13 @@ func postgresSink(ctx context.Context) {
 func main() {
 	_ = godotenv.Load()
 
-	migrateDB()
+	connString, err := getConnectionString()
+	if err != nil {
+		log.Fatalf("ERROR consumer.go@main() -> failed to get connection string: %v", err)
+	}
+
+	migrateDB(connString)
 
 	ctx := context.Background()
-	postgresSink(ctx)
+	postgresSink(ctx, connString)
 }

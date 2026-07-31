@@ -20,9 +20,28 @@ output "private_subnet_ids" {
 # DB Instance
 ##################################################
 
-output "db" {
-  value     = module.rds.db
-  sensitive = true
+output "ssm_parameter_db_engine" {
+  value = module.rds.ssm_parameter_db_engine
+}
+
+output "ssm_parameter_db_address" {
+  value = module.rds.ssm_parameter_db_address
+}
+
+output "ssm_parameter_db_port" {
+  value = module.rds.ssm_parameter_db_port
+}
+
+output "ssm_parameter_db_name" {
+  value = module.rds.ssm_parameter_db_name
+}
+
+output "ssm_parameter_db_username" {
+  value = module.rds.ssm_parameter_db_username
+}
+
+output "db_secret_arn" {
+  value = module.rds.db_secret_arn
 }
 
 ##################################################
@@ -43,7 +62,7 @@ output "kafka_private_ips" {
   value       = module.kafka.kafka_private_ips
 }
 
-output "kafka_bootstrap_server" {
+output "ssm_parameter_kafka_bootstrap_server" {
   description = "IP addresses for the Kafka bootstrap server"
-  value       = module.kafka.kafka_bootstrap_server
+  value       = module.kafka.ssm_parameter_kafka_bootstrap_server
 }

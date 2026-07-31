@@ -11,3 +11,12 @@ resource "aws_instance" "kafka" {
     Name = "${var.name}-kafka-${each.key}"
   }
 }
+
+resource "aws_ssm_parameter" "kafka_bootstrap_server" {
+  name = "/commitflow/kafka/bootstrap-server"
+  type = "String"
+  value = join(",", [
+    for _, instance in aws_instance.kafka :
+    "${instance.private_ip}:9092"
+  ])
+}

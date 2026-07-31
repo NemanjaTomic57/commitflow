@@ -5,9 +5,6 @@ output "kafka_private_ips" {
   }
 }
 
-output "kafka_bootstrap_server" {
-  value = join(",", [
-    for _, instance in aws_instance.kafka :
-    "${instance.private_ip}:9092"
-  ])
+output "ssm_parameter_kafka_bootstrap_server" {
+  value = aws_ssm_parameter.kafka_bootstrap_server.arn
 }

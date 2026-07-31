@@ -24,3 +24,33 @@ resource "aws_db_instance" "this" {
     Name = "${var.name}-db"
   }
 }
+
+resource "aws_ssm_parameter" "db_engine" {
+  name  = "/commitflow/db/engine"
+  type  = "String"
+  value = aws_db_instance.this.engine
+}
+
+resource "aws_ssm_parameter" "db_address" {
+  name  = "/commitflow/db/address"
+  type  = "String"
+  value = aws_db_instance.this.address
+}
+
+resource "aws_ssm_parameter" "db_port" {
+  name  = "/commitflow/db/port"
+  type  = "String"
+  value = aws_db_instance.this.port
+}
+
+resource "aws_ssm_parameter" "db_name" {
+  name  = "/commitflow/db/name"
+  type  = "String"
+  value = aws_db_instance.this.db_name
+}
+
+resource "aws_ssm_parameter" "db_username" {
+  name  = "/commitflow/db/username"
+  type  = "String"
+  value = aws_db_instance.this.username
+}

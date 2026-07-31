@@ -3,6 +3,24 @@ variable "name" {
   type        = string
 }
 
+variable "engine" {
+  description = "Database engine"
+  type        = string
+  default     = "postgres"
+}
+
+variable "engine_version" {
+  description = "Database engine version"
+  type        = string
+  default     = "18.4"
+}
+
+variable "username" {
+  description = "Username for the master user"
+  type        = string
+  default     = "postgres"
+}
+
 variable "instance_class" {
   description = "Instance class for the database instance"
   type        = string

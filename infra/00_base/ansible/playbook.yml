@@ -114,7 +114,7 @@
       changed_when: false
       register: quorum_status
 
-    - name: Reigster node-2 and node-3 as controllers
+    - name: Register node-2 and node-3 as controllers
       shell: >
         {{ kafka_bin }}/kafka-metadata-quorum.sh
         --command-config {{ kafka_config_server }}

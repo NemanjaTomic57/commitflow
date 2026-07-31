@@ -56,6 +56,17 @@ module "security" {
   vpc_cidr = module.vpc.vpc_cidr
 }
 
+module "rds" {
+  source = "./modules/rds"
+
+  name                 = local.name
+  instance_class       = "db.t4g.micro"
+  storage_type         = "gp3"
+  allocated_storage    = 20
+  private_subnet_ids   = module.vpc.private_subnet_ids
+  db_security_group_id = module.security.db_security_group_id
+}
+
 module "nat" {
   source = "./modules/nat"
 

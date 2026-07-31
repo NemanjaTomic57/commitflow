@@ -1,4 +1,28 @@
 ##################################################
+# Postgres
+##################################################
+
+resource "aws_security_group" "db" {
+  name        = "${var.name}-db-sg"
+  description = "Security group for RDS database instance"
+  vpc_id      = var.vpc_id
+
+  tags = {
+    Name = "${var.name}-db-sg"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db_allow_postgres" {
+  security_group_id = aws_security_group.db.id
+  description       = "Allow inbound access to the PostgreSQL port from within the VPC"
+
+  cidr_ipv4   = var.vpc_cidr
+  from_port   = 5432
+  ip_protocol = "tcp"
+  to_port     = 5432
+}
+
+##################################################
 # NAT Instances
 ##################################################
 
@@ -8,7 +32,7 @@ resource "aws_security_group" "nat" {
   vpc_id      = var.vpc_id
 
   tags = {
-    Name = "${var.name}-bastion-sg"
+    Name = "${var.name}-nat-instance-sg"
   }
 }
 

@@ -7,10 +7,10 @@ terraform {
 }
 
 ##################################################
-# VPC Data
+# Terraform Output Values
 ##################################################
 
-data "terraform_remote_state" "vpc" {
+data "terraform_remote_state" "base" {
   backend = "s3"
 
   config = {
@@ -21,8 +21,7 @@ data "terraform_remote_state" "vpc" {
 }
 
 locals {
-  kafka_bootstrap_server = data.terraform_remote_state.vpc.outputs.kafka_bootstrap_server
-  private_subnet_ids     = data.terraform_remote_state.vpc.outputs.private_subnet_ids
+  private_subnet_ids = data.terraform_remote_state.base.outputs.private_subnet_ids
 }
 
 ##################################################
@@ -32,10 +31,14 @@ locals {
 module "task_definitions" {
   source = "./modules/task_definitions"
 
-  name                          = var.name
-  aws_region                    = var.aws_region
-  kafka_bootstrap_server        = local.kafka_bootstrap_server
+  name       = var.name
+  aws_region = var.aws_region
+
+  ecs_task_role_arn             = "arn:aws:iam::761018874759:role/ECSCommitFlowTaskRole"
+  ecs_execution_role_arn        = "arn:aws:iam::761018874759:role/ECSCommitFlowTaskExecutionRole"
   ecr_commitflow_repository_url = "761018874759.dkr.ecr.eu-central-1.amazonaws.com/commitflow"
+  ssm_parameter_github_pat      = "arn:aws:ssm:eu-central-1:761018874759:parameter/commitflow/passwords/github-pat"
+  ssm_parameter_gitlab_pat      = "arn:aws:ssm:eu-central-1:761018874759:parameter/commitflow/passwords/gitlab-pat"
 }
 
 ##################################################

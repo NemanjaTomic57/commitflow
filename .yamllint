@@ -1,0 +1,5 @@
+---
+extends: default
+
+ignore: |
+  infra/00_base/ansible/inventory.yml

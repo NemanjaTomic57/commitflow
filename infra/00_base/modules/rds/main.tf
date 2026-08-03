@@ -1,3 +1,13 @@
+resource "aws_db_parameter_group" "this" {
+  name_prefix = var.name
+  family      = var.parameter_group_family
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = false
+  }
+}
+
 resource "aws_db_subnet_group" "this" {
   name       = var.name
   subnet_ids = values(var.private_subnet_ids)
@@ -9,6 +19,7 @@ resource "aws_db_subnet_group" "this" {
 
 resource "aws_db_instance" "this" {
   db_name                = var.name
+  parameter_group_name   = aws_db_parameter_group.this.name
   engine                 = var.engine
   engine_version         = var.engine_version
   username               = var.username

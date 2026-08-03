@@ -67,13 +67,17 @@ module "security" {
 module "rds" {
   source = "./modules/rds"
 
-  name                 = local.name
-  password             = var.db_password
-  instance_class       = "db.t4g.micro"
-  storage_type         = "gp3"
-  allocated_storage    = 20
-  private_subnet_ids   = module.vpc.private_subnet_ids
-  db_security_group_id = module.security.db_security_group_id
+  name                   = local.name
+  parameter_group_family = "postgres18"
+  engine                 = "postgres"
+  engine_version         = "18.4"
+  username               = "postgres"
+  password               = var.db_password
+  instance_class         = "db.t4g.micro"
+  storage_type           = "gp3"
+  allocated_storage      = 20
+  private_subnet_ids     = module.vpc.private_subnet_ids
+  db_security_group_id   = module.security.db_security_group_id
 }
 
 ##################################################

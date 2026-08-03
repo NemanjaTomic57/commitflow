@@ -73,6 +73,10 @@
         dest: "{{ kafka_config_server }}"
         mode: "0644"
 
+    ##############################################################
+    # Storage
+    ##############################################################
+
     - name: Configure first broker
       shell: >
         {{ kafka_bin }}/kafka-storage.sh format
@@ -93,17 +97,37 @@
       args:
         creates: "{{ kafka_logs }}/meta.properties"
 
-    - name: Start the Kafka servers
-      shell: >
-        {{ kafka_bin }}/kafka-server-start.sh -daemon {{ kafka_config_server }}
-      changed_when: true
+    ##############################################################
+    # Start Kafka
+    ##############################################################
 
-    - name: Wait for Kafka controller listener to be ready
-      wait_for:
+    - name: Check whether Kafka is running
+      ansible.builtin.command:
+        argv:
+          - pgrep
+          - -f
+          - "kafka.Kafka"
+      register: kafka_process
+      changed_when: false
+      failed_when: false
+
+    - name: Start Kafka
+      ansible.builtin.command:
+        argv:
+          - "{{ kafka_bin }}/kafka-server-start.sh"
+          - -daemon
+          - "{{ kafka_config_server }}"
+      when: kafka_process.rc != 0
+
+    - name: Wait for controller listener
+      ansible.builtin.wait_for:
         host: "{{ ansible_host }}"
         port: 9093
-        delay: 5
         timeout: 60
+
+    ##############################################################
+    # Start Kafka
+    ##############################################################
 
     - name: Get quorum status
       shell: |

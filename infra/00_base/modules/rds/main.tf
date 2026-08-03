@@ -8,17 +8,17 @@ resource "aws_db_subnet_group" "this" {
 }
 
 resource "aws_db_instance" "this" {
-  db_name                     = var.name
-  engine                      = "postgres"
-  engine_version              = "18.4"
-  username                    = "postgres"
-  manage_master_user_password = true
-  instance_class              = var.instance_class
-  storage_type                = var.storage_type
-  allocated_storage           = var.allocated_storage
-  db_subnet_group_name        = aws_db_subnet_group.this.name
-  vpc_security_group_ids      = [var.db_security_group_id]
-  skip_final_snapshot         = true
+  db_name                = var.name
+  engine                 = var.engine
+  engine_version         = var.engine_version
+  username               = var.username
+  password               = var.password
+  instance_class         = var.instance_class
+  storage_type           = var.storage_type
+  allocated_storage      = var.allocated_storage
+  db_subnet_group_name   = aws_db_subnet_group.this.name
+  vpc_security_group_ids = [var.db_security_group_id]
+  skip_final_snapshot    = true
 
   tags = {
     Name = "${var.name}-db"
@@ -53,4 +53,10 @@ resource "aws_ssm_parameter" "db_username" {
   name  = "/commitflow/db/username"
   type  = "String"
   value = aws_db_instance.this.username
+}
+
+resource "aws_ssm_parameter" "db_password" {
+  name  = "/commitflow/db/password"
+  type  = "String"
+  value = aws_db_instance.this.password
 }

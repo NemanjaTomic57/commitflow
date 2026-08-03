@@ -21,6 +21,12 @@ variable "username" {
   default     = "postgres"
 }
 
+variable "password" {
+  description = "Username for the master user"
+  type        = string
+  sensitive   = true
+}
+
 variable "instance_class" {
   description = "Instance class for the database instance"
   type        = string

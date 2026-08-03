@@ -18,6 +18,6 @@ output "ssm_parameter_db_username" {
   value = aws_ssm_parameter.db_username.arn
 }
 
-output "db_secret_arn" {
-  value = aws_db_instance.this.master_user_secret[0].secret_arn
+output "ssm_parameter_db_password" {
+  value = aws_ssm_parameter.db_password.arn
 }

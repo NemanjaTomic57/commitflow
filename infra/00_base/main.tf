@@ -10,6 +10,10 @@ locals {
   name = "commitflow"
 }
 
+##################################################
+# VPC
+##################################################
+
 module "vpc" {
   source = "./modules/vpc"
 
@@ -48,6 +52,10 @@ module "vpc" {
   }
 }
 
+##################################################
+# Security Groups
+##################################################
+
 module "security" {
   source = "./modules/security"
 
@@ -60,12 +68,17 @@ module "rds" {
   source = "./modules/rds"
 
   name                 = local.name
+  password             = var.db_password
   instance_class       = "db.t4g.micro"
   storage_type         = "gp3"
   allocated_storage    = 20
   private_subnet_ids   = module.vpc.private_subnet_ids
   db_security_group_id = module.security.db_security_group_id
 }
+
+##################################################
+# NAT Instances
+##################################################
 
 module "nat" {
   source = "./modules/nat"
@@ -80,6 +93,10 @@ module "nat" {
   key_name              = "aws"
 }
 
+##################################################
+# Kafka Cluster on EC2
+##################################################
+
 module "kafka" {
   source = "./modules/kafka"
 
@@ -89,4 +106,20 @@ module "kafka" {
   kafka_security_group_id = module.security.kafka_security_group_id
   ami_id                  = "ami-0723bff07f72bb394"
   key_name                = "aws"
+}
+
+##################################################
+# SSM Parameters
+##################################################
+
+resource "aws_ssm_parameter" "github_pat" {
+  name  = "/commitflow/github/pat"
+  type  = "SecureString"
+  value = var.github_pat
+}
+
+resource "aws_ssm_parameter" "gitlab_pat" {
+  name  = "/commitflow/gitlab/pat"
+  type  = "SecureString"
+  value = var.gitlab_pat
 }

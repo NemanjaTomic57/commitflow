@@ -25,6 +25,16 @@ locals {
 }
 
 ##################################################
+# IAM
+##################################################
+
+module "iam" {
+  source = "./modules/iam"
+
+  name = "var.name"
+}
+
+##################################################
 # ECS Task Definitions
 ##################################################
 
@@ -34,11 +44,9 @@ module "task_definitions" {
   name       = var.name
   aws_region = var.aws_region
 
-  ecs_task_role_arn             = "arn:aws:iam::761018874759:role/ECSCommitFlowTaskRole"
-  ecs_execution_role_arn        = "arn:aws:iam::761018874759:role/ECSCommitFlowTaskExecutionRole"
+  ecs_task_role_arn             = ""
+  ecs_execution_role_arn        = module.iam.ecs_task_execution_role_arn
   ecr_commitflow_repository_url = "761018874759.dkr.ecr.eu-central-1.amazonaws.com/commitflow"
-  ssm_parameter_github_pat      = "arn:aws:ssm:eu-central-1:761018874759:parameter/commitflow/passwords/github-pat"
-  ssm_parameter_gitlab_pat      = "arn:aws:ssm:eu-central-1:761018874759:parameter/commitflow/passwords/gitlab-pat"
 }
 
 ##################################################
@@ -72,3 +80,20 @@ resource "aws_ecs_service" "producer" {
   }
 }
 
+resource "aws_ecs_service" "consumer" {
+  name                 = "consumer"
+  cluster              = aws_ecs_cluster.commitflow.id
+  task_definition      = module.task_definitions.consumer_task_definition_arn
+  desired_count        = 1
+  launch_type          = "FARGATE"
+  force_new_deployment = true
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  network_configuration {
+    subnets = values(local.private_subnet_ids)
+  }
+}

@@ -40,8 +40,8 @@ output "ssm_parameter_db_username" {
   value = module.rds.ssm_parameter_db_username
 }
 
-output "db_secret_arn" {
-  value = module.rds.db_secret_arn
+output "ssm_parameter_db_password" {
+  value = module.rds.ssm_parameter_db_password
 }
 
 ##################################################
@@ -65,4 +65,16 @@ output "kafka_private_ips" {
 output "ssm_parameter_kafka_bootstrap_server" {
   description = "IP addresses for the Kafka bootstrap server"
   value       = module.kafka.ssm_parameter_kafka_bootstrap_server
+}
+
+##################################################
+# SSM Parameters
+##################################################
+
+output "ssm_parameter_github_pat" {
+  value = aws_ssm_parameter.github_pat.arn
+}
+
+output "ssm_parameter_gitlab_pat" {
+  value = aws_ssm_parameter.gitlab_pat.arn
 }

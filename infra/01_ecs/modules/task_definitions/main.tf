@@ -18,8 +18,10 @@ locals {
   ssm_parameter_db_port               = data.terraform_remote_state.base.outputs.ssm_parameter_db_port
   ssm_parameter_db_name               = data.terraform_remote_state.base.outputs.ssm_parameter_db_name
   ssm_parameter_db_username           = data.terraform_remote_state.base.outputs.ssm_parameter_db_username
-  db_secret_arn                       = data.terraform_remote_state.base.outputs.db_secret_arn
+  ssm_parameter_db_password           = data.terraform_remote_state.base.outputs.ssm_parameter_db_password
   ssm_parameter_kafka_bootstrap_sever = data.terraform_remote_state.base.outputs.ssm_parameter_kafka_bootstrap_server
+  ssm_parameter_github_pat            = data.terraform_remote_state.base.outputs.ssm_parameter_github_pat
+  ssm_parameter_gitlab_pat            = data.terraform_remote_state.base.outputs.ssm_parameter_gitlab_pat
 }
 
 ##################################################
@@ -69,11 +71,11 @@ resource "aws_ecs_task_definition" "commitflow_producer" {
         },
         {
           name      = "GITHUB_PAT"
-          valueFrom = var.ssm_parameter_github_pat
+          valueFrom = local.ssm_parameter_github_pat
         },
         {
           name      = "GITLAB_PAT"
-          valueFrom = var.ssm_parameter_gitlab_pat
+          valueFrom = local.ssm_parameter_gitlab_pat
         }
       ]
 
@@ -146,7 +148,7 @@ resource "aws_ecs_task_definition" "commitflow_consumer" {
         },
         {
           name      = "DB_PASSWORD"
-          valueFrom = local.db_secret_arn
+          valueFrom = local.ssm_parameter_db_password
         },
         {
           name      = "KAFKA_BOOTSTRAP_SERVER"

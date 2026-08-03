@@ -21,13 +21,3 @@ variable "ecr_commitflow_repository_url" {
   type        = string
   description = "ECR repository URL for commitflow image"
 }
-
-variable "ssm_parameter_github_pat" {
-  type        = string
-  description = "ARN of the SSM parameter for GitHub PAT"
-}
-
-variable "ssm_parameter_gitlab_pat" {
-  type        = string
-  description = "ARN of the SSM parameter for GitLab PAT"
-}

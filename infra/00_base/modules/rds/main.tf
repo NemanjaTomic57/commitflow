@@ -18,8 +18,8 @@ resource "aws_db_subnet_group" "this" {
 }
 
 resource "aws_db_instance" "this" {
-  db_name                = var.name
-  parameter_group_name   = aws_db_parameter_group.this.name
+  db_name = var.name
+  # parameter_group_name   = aws_db_parameter_group.this.name
   engine                 = var.engine
   engine_version         = var.engine_version
   username               = var.username

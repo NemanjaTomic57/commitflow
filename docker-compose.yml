@@ -47,7 +47,7 @@ services:
       - '5432:5432'
     volumes:
       - postgres:/var/lib/postgresql
-      - ./postgres:/docker-entrypoint-initdb.d
+      - ./.dev/postgres:/docker-entrypoint-initdb.d
     environment:
       POSTGRES_USER: 'postgres'
       POSTGRES_PASSWORD: 'password'
@@ -70,7 +70,7 @@ services:
       - '3000:3000'
     volumes:
       - grafana:/var/lib/grafana
-      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./.dev/grafana/datasources:/etc/grafana/provisioning/datasources
     environment:
       GF_SECURITY_ADMIN_USER: 'admin'
       GF_SECURITY_ADMIN_PASSWORD: 'password'
@@ -95,7 +95,7 @@ services:
         condition: service_healthy
     restart: 'no'
     volumes:
-      - ./grafana/dashboards/git-commits.yml:/git-commits.yml:ro
+      - ./.dev/grafana/dashboards/git-commits.yml:/git-commits.yml:ro
     environment:
       GRAFANA_URL: http://grafana:3000
     entrypoint: >

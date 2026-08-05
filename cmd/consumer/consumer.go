@@ -60,7 +60,7 @@ func getConnectionString() (string, error) {
 		return "", fmt.Errorf(errorMessage, "name")
 	}
 
-	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable",
+	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=prefer",
 		username, password, address, port, name)
 
 	fmt.Println(connString)

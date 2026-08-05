@@ -103,7 +103,7 @@ resource "aws_vpc_security_group_ingress_rule" "kafka_allow_kafka" {
   }
 
   security_group_id = aws_security_group.kafka.id
-  description       = "Allow inbound HTTP traffic from NAT instances"
+  description       = "Allow inbound Kafka traffic"
 
   referenced_security_group_id = each.value
   from_port                    = 9092
@@ -157,7 +157,7 @@ resource "aws_security_group" "db" {
 
 resource "aws_vpc_security_group_ingress_rule" "db_allow_postgres" {
   security_group_id = aws_security_group.db.id
-  description       = "Allow inbound access to the PostgreSQL port from within the VPC"
+  description       = "Allow inbound access to the PostgreSQL port from ECS services"
 
   referenced_security_group_id = aws_security_group.ecs.id
   from_port                    = 5432
@@ -179,3 +179,42 @@ resource "aws_security_group" "ecs" {
   }
 }
 
+resource "aws_vpc_security_group_egress_rule" "ecs_allow_http" {
+  security_group_id = aws_security_group.ecs.id
+  description       = "Allow outbound HTTP traffic over NAT instances"
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 80
+  ip_protocol = "tcp"
+  to_port     = 80
+}
+
+resource "aws_vpc_security_group_egress_rule" "ecs_allow_https" {
+  security_group_id = aws_security_group.ecs.id
+  description       = "Allow outbound HTTPS traffic over NAT instances"
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 443
+  ip_protocol = "tcp"
+  to_port     = 443
+}
+
+resource "aws_vpc_security_group_egress_rule" "ecs_allow_postgres" {
+  security_group_id = aws_security_group.ecs.id
+  description       = "Allow outbound access to the PostgreSQL port"
+
+  referenced_security_group_id = aws_security_group.db.id
+  from_port                    = 5432
+  ip_protocol                  = "tcp"
+  to_port                      = 5432
+}
+
+resource "aws_vpc_security_group_egress_rule" "ecs_allow_kafka" {
+  security_group_id = aws_security_group.ecs.id
+  description       = "Allow outbound access to the Kafka broker port"
+
+  referenced_security_group_id = aws_security_group.kafka.id
+  from_port                    = 9092
+  ip_protocol                  = "tcp"
+  to_port                      = 9092
+}

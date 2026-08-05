@@ -77,7 +77,8 @@ resource "aws_ecs_service" "producer" {
   }
 
   network_configuration {
-    subnets = values(local.private_subnet_ids)
+    subnets         = values(local.private_subnet_ids)
+    security_groups = [local.ecs_security_group_id]
   }
 }
 

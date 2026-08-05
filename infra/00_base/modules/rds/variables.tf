@@ -3,11 +3,6 @@ variable "name" {
   type        = string
 }
 
-variable "parameter_group_family" {
-  description = "Database parameter group family"
-  type        = string
-}
-
 variable "engine" {
   description = "Database engine"
   type        = string

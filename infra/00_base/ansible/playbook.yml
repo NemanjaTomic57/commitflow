@@ -149,6 +149,21 @@
         port: 9093
         timeout: 120
 
+    - name: Wait until additional Kafka nodes respond
+      ansible.builtin.command:
+        argv:
+          - "{{ kafka_bin }}/kafka-metadata-quorum.sh"
+          - "--bootstrap-server"
+          - "{{ ansible_host }}:9092"
+          - "describe"
+          - "--status"
+      register: kafka_quorum
+      until: kafka_quorum.rc == 0
+      retries: 30
+      delay: 2
+      changed_when: false
+      when: inventory_hostname != groups['kafka'][0]
+
     ##############################################################
     # Register additional controllers
     ##############################################################

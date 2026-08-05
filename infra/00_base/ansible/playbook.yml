@@ -98,53 +98,90 @@
         creates: "{{ kafka_logs }}/meta.properties"
 
     ##############################################################
-    # Start Kafka
+    # Start first Kafka node
     ##############################################################
 
-    - name: Check whether Kafka is running
-      ansible.builtin.command:
-        argv:
-          - pgrep
-          - -f
-          - "kafka.Kafka"
-      register: kafka_process
-      changed_when: false
-      failed_when: false
-
-    - name: Start Kafka
+    - name: Start initial Kafka controller
       ansible.builtin.command:
         argv:
           - "{{ kafka_bin }}/kafka-server-start.sh"
           - -daemon
           - "{{ kafka_config_server }}"
-      when: kafka_process.rc != 0
+      when: inventory_hostname == groups['kafka'][0]
+
+    - name: Wait for initial controller listener
+      ansible.builtin.wait_for:
+        host: "{{ ansible_host }}"
+        port: 9093
+        timeout: 120
+      when: inventory_hostname == groups['kafka'][0]
+
+    - name: Wait until initial Kafka broker responds
+      ansible.builtin.command:
+        argv:
+          - "{{ kafka_bin }}/kafka-metadata-quorum.sh"
+          - "--bootstrap-server"
+          - "{{ hostvars[groups['kafka'][0]].ansible_host }}:9092"
+          - "describe"
+          - "--status"
+      register: kafka_quorum
+      until: kafka_quorum.rc == 0
+      retries: 30
+      delay: 2
+      changed_when: false
+      when: inventory_hostname == groups['kafka'][0]
+
+    ##############################################################
+    # Start additional Kafka nodes
+    ##############################################################
+
+    - name: Start additional Kafka nodes
+      ansible.builtin.command:
+        argv:
+          - "{{ kafka_bin }}/kafka-server-start.sh"
+          - "-daemon"
+          - "{{ kafka_config_server }}"
+      when: inventory_hostname != groups['kafka'][0]
 
     - name: Wait for controller listener
       ansible.builtin.wait_for:
         host: "{{ ansible_host }}"
         port: 9093
-        timeout: 60
+        timeout: 120
 
     ##############################################################
-    # Start Kafka
+    # Register additional controllers
     ##############################################################
 
-    - name: Get quorum status
-      shell: |
-        set -o pipefail
-        {{ kafka_bin }}/kafka-metadata-quorum.sh \
-        --bootstrap-server {{ hostvars[groups['kafka'][0]].ansible_host }}:9092 \
-        describe --status | grep "CurrentVoters"
-      changed_when: false
+    - name: Register additional controllers
+      ansible.builtin.command:
+        argv:
+          - "{{ kafka_bin }}/kafka-metadata-quorum.sh"
+          - "--command-config"
+          - "{{ kafka_config_server }}"
+          - "--bootstrap-server"
+          - "{{ hostvars[groups['kafka'][0]].ansible_host }}:9092"
+          - "add-controller"
+      when: inventory_hostname != groups['kafka'][0]
+      throttle: 1
+
+    ##############################################################
+    # Verify quorum
+    ##############################################################
+
+    - name: Get final quorum status
+      ansible.builtin.command:
+        argv:
+          - "{{ kafka_bin }}/kafka-metadata-quorum.sh"
+          - "--bootstrap-server"
+          - "{{ hostvars[groups['kafka'][0]].ansible_host }}:9092"
+          - "describe"
+          - "--status"
       register: quorum_status
+      changed_when: false
+      run_once: true
 
-    - name: Register node-2 and node-3 as controllers
-      shell: >
-        {{ kafka_bin }}/kafka-metadata-quorum.sh
-        --command-config {{ kafka_config_server }}
-        --bootstrap-server {{ hostvars[groups['kafka'][0]].ansible_host }}:9092
-        add-controller
-      changed_when: true
-      when:
-        - inventory_hostname != groups['kafka'][0]
-        - ansible_host not in quorum_status.stdout
+    - name: Show quorum
+      ansible.builtin.debug:
+        var: quorum_status.stdout_lines
+      run_once: true

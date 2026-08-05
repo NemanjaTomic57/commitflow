@@ -17,6 +17,14 @@ output "private_subnet_ids" {
 }
 
 ##################################################
+# Security Groups
+##################################################
+
+output "ecs_security_group_id" {
+  value = module.security.ecs_security_group_id
+}
+
+##################################################
 # DB Instance
 ##################################################
 

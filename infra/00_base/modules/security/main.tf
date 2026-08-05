@@ -1,28 +1,4 @@
 ##################################################
-# Postgres
-##################################################
-
-resource "aws_security_group" "db" {
-  name        = "${var.name}-db-sg"
-  description = "Security group for RDS database instance"
-  vpc_id      = var.vpc_id
-
-  tags = {
-    Name = "${var.name}-db-sg"
-  }
-}
-
-resource "aws_vpc_security_group_ingress_rule" "db_allow_postgres" {
-  security_group_id = aws_security_group.db.id
-  description       = "Allow inbound access to the PostgreSQL port from within the VPC"
-
-  cidr_ipv4   = var.vpc_cidr
-  from_port   = 5432
-  ip_protocol = "tcp"
-  to_port     = 5432
-}
-
-##################################################
 # NAT Instances
 ##################################################
 
@@ -114,25 +90,30 @@ resource "aws_vpc_security_group_ingress_rule" "kafka_allow_ssh" {
   security_group_id = aws_security_group.kafka.id
   description       = "Allow inbound SSH access from NAT instances"
 
-  cidr_ipv4   = var.vpc_cidr
-  from_port   = 22
-  ip_protocol = "tcp"
-  to_port     = 22
+  referenced_security_group_id = aws_security_group.nat.id
+  from_port                    = 22
+  ip_protocol                  = "tcp"
+  to_port                      = 22
 }
 
 resource "aws_vpc_security_group_ingress_rule" "kafka_allow_kafka" {
+  for_each = {
+    kafka = aws_security_group.kafka.id
+    ecs   = aws_security_group.ecs.id
+  }
+
   security_group_id = aws_security_group.kafka.id
   description       = "Allow inbound HTTP traffic from NAT instances"
 
-  cidr_ipv4   = var.vpc_cidr
-  from_port   = 9092
-  ip_protocol = "tcp"
-  to_port     = 9093
+  referenced_security_group_id = each.value
+  from_port                    = 9092
+  ip_protocol                  = "tcp"
+  to_port                      = 9093
 }
 
 resource "aws_vpc_security_group_egress_rule" "kafka_allow_http" {
   security_group_id = aws_security_group.kafka.id
-  description       = "Allow outbound HTTP traffic from NAT instances"
+  description       = "Allow outbound HTTP traffic over NAT instances"
 
   cidr_ipv4   = "0.0.0.0/0"
   from_port   = 80
@@ -142,7 +123,7 @@ resource "aws_vpc_security_group_egress_rule" "kafka_allow_http" {
 
 resource "aws_vpc_security_group_egress_rule" "kafka_allow_https" {
   security_group_id = aws_security_group.kafka.id
-  description       = "Allow outbound HTTPS traffic from NAT instances"
+  description       = "Allow outbound HTTPS traffic over NAT instances"
 
   cidr_ipv4   = "0.0.0.0/0"
   from_port   = 443
@@ -152,10 +133,49 @@ resource "aws_vpc_security_group_egress_rule" "kafka_allow_https" {
 
 resource "aws_vpc_security_group_egress_rule" "kafka_allow_kafka" {
   security_group_id = aws_security_group.kafka.id
-  description       = "Allow outbound HTTP traffic from NAT instances"
+  description       = "Allow outbound Kafka traffic to other Kafka nodes"
 
-  cidr_ipv4   = var.vpc_cidr
-  from_port   = 9092
-  ip_protocol = "tcp"
-  to_port     = 9093
+  referenced_security_group_id = aws_security_group.kafka.id
+  from_port                    = 9092
+  ip_protocol                  = "tcp"
+  to_port                      = 9093
 }
+
+##################################################
+# RDS
+##################################################
+
+resource "aws_security_group" "db" {
+  name        = "${var.name}-db-sg"
+  description = "Security group for RDS database instance"
+  vpc_id      = var.vpc_id
+
+  tags = {
+    Name = "${var.name}-db-sg"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db_allow_postgres" {
+  security_group_id = aws_security_group.db.id
+  description       = "Allow inbound access to the PostgreSQL port from within the VPC"
+
+  referenced_security_group_id = aws_security_group.ecs.id
+  from_port                    = 5432
+  ip_protocol                  = "tcp"
+  to_port                      = 5432
+}
+
+##################################################
+# ECS Services
+##################################################
+
+resource "aws_security_group" "ecs" {
+  name        = "${var.name}-ecs-sg"
+  description = "Security group for ECS services"
+  vpc_id      = var.vpc_id
+
+  tags = {
+    Name = "${var.name}-ecs-sg"
+  }
+}
+

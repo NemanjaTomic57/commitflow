@@ -21,7 +21,8 @@ data "terraform_remote_state" "base" {
 }
 
 locals {
-  private_subnet_ids = data.terraform_remote_state.base.outputs.private_subnet_ids
+  private_subnet_ids    = data.terraform_remote_state.base.outputs.private_subnet_ids
+  ecs_security_group_id = data.terraform_remote_state.base.outputs.ecs_security_group_id
 }
 
 ##################################################
@@ -94,6 +95,7 @@ resource "aws_ecs_service" "consumer" {
   }
 
   network_configuration {
-    subnets = values(local.private_subnet_ids)
+    subnets         = values(local.private_subnet_ids)
+    security_groups = [local.ecs_security_group_id]
   }
 }

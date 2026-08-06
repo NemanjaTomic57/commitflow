@@ -100,24 +100,36 @@
     ##############################################################
     # Start first Kafka node
     ##############################################################
+    
+    - name: Check if Kafka is running
+      command:
+        argv:
+          - "{{ kafka_bin }}/kafka-broker-api-versions.sh"
+          - "--bootstrap-server"
+          - "{{ ansible_host }}:9092"
+      register: kafka_broker_api_versions
+      changed_when: false
+      failed_when: false
 
     - name: Start initial Kafka controller
-      ansible.builtin.command:
+      command:
         argv:
           - "{{ kafka_bin }}/kafka-server-start.sh"
           - -daemon
           - "{{ kafka_config_server }}"
-      when: inventory_hostname == groups['kafka'][0]
+      when: 
+        - inventory_hostname == groups['kafka'][0]
+        - kafka_broker_api_versions.rc == 1
 
     - name: Wait for initial controller listener
-      ansible.builtin.wait_for:
+      wait_for:
         host: "{{ ansible_host }}"
         port: 9093
         timeout: 120
       when: inventory_hostname == groups['kafka'][0]
 
     - name: Wait until initial Kafka broker responds
-      ansible.builtin.command:
+      command:
         argv:
           - "{{ kafka_bin }}/kafka-metadata-quorum.sh"
           - "--bootstrap-server"
@@ -141,16 +153,18 @@
           - "{{ kafka_bin }}/kafka-server-start.sh"
           - "-daemon"
           - "{{ kafka_config_server }}"
-      when: inventory_hostname != groups['kafka'][0]
+      when: 
+        - inventory_hostname != groups['kafka'][0]
+        - kafka_broker_api_versions.rc == 1
 
     - name: Wait for controller listener
-      ansible.builtin.wait_for:
+      wait_for:
         host: "{{ ansible_host }}"
         port: 9093
         timeout: 120
 
     - name: Wait until additional Kafka nodes respond
-      ansible.builtin.command:
+      command:
         argv:
           - "{{ kafka_bin }}/kafka-metadata-quorum.sh"
           - "--bootstrap-server"
@@ -168,8 +182,16 @@
     # Register additional controllers
     ##############################################################
 
+    - name: Get CurrentVoters of Kafka cluster
+      shell: >
+        {{ kafka_bin }}/kafka-metadata-quorum.sh 
+        --bootstrap-server {{ ansible_host }}:9092 
+        describe --status | grep CurrentVoters
+      register: kafka_quorum_current_voters
+      changed_when: false
+
     - name: Register additional controllers
-      ansible.builtin.command:
+      command:
         argv:
           - "{{ kafka_bin }}/kafka-metadata-quorum.sh"
           - "--command-config"
@@ -177,7 +199,7 @@
           - "--bootstrap-server"
           - "{{ hostvars[groups['kafka'][0]].ansible_host }}:9092"
           - "add-controller"
-      when: inventory_hostname != groups['kafka'][0]
+      when: ansible_host not in kafka_quorum_current_voters.stdout
       throttle: 1
 
     ##############################################################
@@ -197,7 +219,7 @@
       run_once: true
 
     - name: Show quorum
-      ansible.builtin.debug:
+      debug:
         var: quorum_status.stdout_lines
       run_once: true
 
@@ -207,7 +229,7 @@
   tasks:
     - name: Install Postgres
       become: true
-      ansible.builtin.dnf:
+      dnf:
         name:
           - postgresql18
           - python3-psycopg2
@@ -221,10 +243,6 @@
         db_username: "{{ lookup('amazon.aws.aws_ssm', ssm_db_username) }}"
         db_password: "{{ lookup('amazon.aws.aws_ssm', ssm_db_password) }}"
       no_log: true
-
-    - name: Debug
-      debug:
-        var: db_port
 
     - name: Create Grafana database
       community.postgresql.postgresql_db:

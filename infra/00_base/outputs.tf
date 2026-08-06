@@ -88,9 +88,9 @@ output "ssm_parameter_gitlab_pat" {
 }
 
 output "ssm_parameter_grafana_username" {
-  value = aws_ssm_parameter.grafana_username
+  value = aws_ssm_parameter.grafana_username.arn
 }
 
 output "ssm_parameter_grafana_password" {
-  value = aws_ssm_parameter.grafana_password
+  value = aws_ssm_parameter.grafana_password.arn
 }

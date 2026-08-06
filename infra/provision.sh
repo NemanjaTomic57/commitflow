@@ -3,6 +3,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+if [[ -z "${VIRTUAL_ENV:-}" ]]; then
+  echo "Error: Python virtual environment is not activated."
+  exit 1
+fi
+
 terraform -chdir="${SCRIPT_DIR}/00_base" init
 terraform -chdir="${SCRIPT_DIR}/00_base" apply -auto-approve -var-file secrets.tfvars
 

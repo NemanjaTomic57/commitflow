@@ -22,6 +22,8 @@ locals {
   ssm_parameter_kafka_bootstrap_sever = data.terraform_remote_state.base.outputs.ssm_parameter_kafka_bootstrap_server
   ssm_parameter_github_pat            = data.terraform_remote_state.base.outputs.ssm_parameter_github_pat
   ssm_parameter_gitlab_pat            = data.terraform_remote_state.base.outputs.ssm_parameter_gitlab_pat
+  ssm_parameter_grafana_username      = data.terraform_remote_state.base.outputs.ssm_parameter_grafana_username
+  ssm_parameter_grafana_password      = data.terraform_remote_state.base.outputs.ssm_parameter_grafana_password
 }
 
 ##################################################
@@ -33,7 +35,7 @@ resource "aws_cloudwatch_log_group" "this" {
 }
 
 ##################################################
-# ECS Task Definitions
+# ECS Task Definition CommitFlow Producer
 ##################################################
 
 resource "aws_ecs_task_definition" "commitflow_producer" {
@@ -100,6 +102,10 @@ resource "aws_ecs_task_definition" "commitflow_producer" {
   }
 }
 
+##################################################
+# ECS Task Definition CommitFlow Consumer
+##################################################
+
 resource "aws_ecs_task_definition" "commitflow_consumer" {
   family                   = "commitflow-consumer"
   requires_compatibilities = ["FARGATE"]
@@ -143,7 +149,7 @@ resource "aws_ecs_task_definition" "commitflow_consumer" {
           valueFrom = local.ssm_parameter_db_name
         },
         {
-          name      = "DB_USERNAME"
+          name      = "DB_USER"
           valueFrom = local.ssm_parameter_db_username
         },
         {
@@ -174,5 +180,84 @@ resource "aws_ecs_task_definition" "commitflow_consumer" {
 
   tags = {
     Name = "${var.name}-commitflow-consumer"
+  }
+}
+
+##################################################
+# ECS Task Definition Grafana
+##################################################
+
+resource "aws_ecs_task_definition" "grafana" {
+  family                   = "grafana"
+  requires_compatibilities = ["FARGATE"]
+
+  network_mode = "awsvpc"
+  cpu          = "256"
+  memory       = "512"
+
+  task_role_arn      = var.ecs_task_role_arn
+  execution_role_arn = var.ecs_execution_role_arn
+
+  runtime_platform {
+    operating_system_family = "LINUX"
+  }
+
+  pid_mode = "task"
+
+  container_definitions = jsonencode([
+    {
+      name      = "grafana"
+      image     = "grafana/grafana:12.2"
+      essential = true
+
+      secrets = [
+        {
+          name      = "GF_SECURITY_ADMIN_USER"
+          valueFrom = local.ssm_parameter_grafana_username
+        },
+        {
+          name      = "GF_SECURITY_ADMIN_PASSWORD"
+          valueFrom = local.ssm_parameter_grafana_password
+        },
+        {
+          name      = "GF_DATABASE_TYPE"
+          valueFrom = local.ssm_parameter_db_engine
+        },
+        {
+          name      = "GF_DATABASE_HOST"
+          valueFrom = local.ssm_parameter_db_address
+        },
+        {
+          name      = "GF_DATABASE_NAME"
+          valueFrom = local.ssm_parameter_db_name
+        },
+        {
+          name      = "GF_DATABASE_USER"
+          valueFrom = local.ssm_parameter_db_username
+        },
+        {
+          name      = "GF_DATABASE_PASSWORD"
+          valueFrom = local.ssm_parameter_db_password
+        }
+      ]
+
+      linuxParameters = {
+        initProcessEnabled = true
+      }
+
+      logConfiguration = {
+        logDriver = "awslogs"
+
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.this.name
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "grafana"
+        }
+      }
+    }
+  ])
+
+  tags = {
+    Name = "${var.name}-commitflow-grafana"
   }
 }

@@ -21,6 +21,8 @@ data "terraform_remote_state" "base" {
 }
 
 locals {
+  name                  = "commitflow"
+  aws_region            = "eu-central-1"
   private_subnet_ids    = data.terraform_remote_state.base.outputs.private_subnet_ids
   ecs_security_group_id = data.terraform_remote_state.base.outputs.ecs_security_group_id
 }
@@ -32,7 +34,7 @@ locals {
 module "iam" {
   source = "./modules/iam"
 
-  name = "var.name"
+  name = local.name
 }
 
 ##################################################
@@ -42,8 +44,8 @@ module "iam" {
 module "task_definitions" {
   source = "./modules/task_definitions"
 
-  name       = var.name
-  aws_region = var.aws_region
+  name       = local.name
+  aws_region = local.aws_region
 
   ecs_task_role_arn             = ""
   ecs_execution_role_arn        = module.iam.ecs_task_execution_role_arn
@@ -55,8 +57,8 @@ module "task_definitions" {
 ##################################################
 
 resource "aws_ecs_cluster" "commitflow" {
-  name   = var.name
-  region = var.aws_region
+  name   = local.name
+  region = local.aws_region
 }
 
 ##################################################

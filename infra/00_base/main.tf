@@ -116,7 +116,7 @@ module "kafka" {
 }
 
 ##################################################
-# SSM Parameters
+# SSM Parameter Store
 ##################################################
 
 resource "aws_ssm_parameter" "github_pat" {
@@ -129,4 +129,16 @@ resource "aws_ssm_parameter" "gitlab_pat" {
   name  = "/commitflow/gitlab/pat"
   type  = "SecureString"
   value = var.gitlab_pat
+}
+
+resource "aws_ssm_parameter" "grafana_username" {
+  name  = "/commitflow/grafana/username"
+  type  = "String"
+  value = var.grafana_username
+}
+
+resource "aws_ssm_parameter" "grafana_password" {
+  name  = "/commitflow/grafana/password"
+  type  = "String"
+  value = var.grafana_password
 }

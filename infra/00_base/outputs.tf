@@ -86,3 +86,11 @@ output "ssm_parameter_github_pat" {
 output "ssm_parameter_gitlab_pat" {
   value = aws_ssm_parameter.gitlab_pat.arn
 }
+
+output "ssm_parameter_grafana_username" {
+  value = aws_ssm_parameter.grafana_username
+}
+
+output "ssm_parameter_grafana_password" {
+  value = aws_ssm_parameter.grafana_password
+}

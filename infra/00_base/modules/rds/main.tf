@@ -57,6 +57,18 @@ resource "aws_ssm_parameter" "db_username" {
 
 resource "aws_ssm_parameter" "db_password" {
   name  = "/commitflow/db/password"
-  type  = "String"
+  type  = "SecureString"
   value = aws_db_instance.this.password
+}
+
+resource "aws_ssm_parameter" "db_url_commitflow" {
+  name  = "/commitflow/db/url/commitflow"
+  type  = "SecureString"
+  value = "postgresql://${aws_db_instance.this.username}:${aws_db_instance.this.password}@${aws_db_instance.this.address}:${aws_db_instance.this.port}/commitflow"
+}
+
+resource "aws_ssm_parameter" "db_url_grafana" {
+  name  = "/commitflow/db/url/grafana"
+  type  = "SecureString"
+  value = "postgresql://${aws_db_instance.this.username}:${aws_db_instance.this.password}@${aws_db_instance.this.address}:${aws_db_instance.this.port}/grafana"
 }

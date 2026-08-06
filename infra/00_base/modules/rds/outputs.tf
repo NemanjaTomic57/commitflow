@@ -21,3 +21,11 @@ output "ssm_parameter_db_username" {
 output "ssm_parameter_db_password" {
   value = aws_ssm_parameter.db_password.arn
 }
+
+output "ssm_parameter_db_url_commitflow" {
+  value = aws_ssm_parameter.db_url_commitflow.arn
+}
+
+output "ssm_parameter_db_url_grafana" {
+  value = aws_ssm_parameter.db_url_grafana.arn
+}

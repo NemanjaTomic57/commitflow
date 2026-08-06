@@ -28,28 +28,12 @@ output "ecs_security_group_id" {
 # DB Instance
 ##################################################
 
-output "ssm_parameter_db_engine" {
-  value = module.rds.ssm_parameter_db_engine
+output "ssm_parameter_db_url_commitflow" {
+  value = module.rds.ssm_parameter_db_url_commitflow
 }
 
-output "ssm_parameter_db_address" {
-  value = module.rds.ssm_parameter_db_address
-}
-
-output "ssm_parameter_db_port" {
-  value = module.rds.ssm_parameter_db_port
-}
-
-output "ssm_parameter_db_name" {
-  value = module.rds.ssm_parameter_db_name
-}
-
-output "ssm_parameter_db_username" {
-  value = module.rds.ssm_parameter_db_username
-}
-
-output "ssm_parameter_db_password" {
-  value = module.rds.ssm_parameter_db_password
+output "ssm_parameter_db_url_grafana" {
+  value = module.rds.ssm_parameter_db_url_grafana
 }
 
 ##################################################

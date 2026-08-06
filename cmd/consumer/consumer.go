@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 
@@ -37,35 +36,6 @@ ON CONFLICT (provider, id) DO UPDATE SET
 	url = EXCLUDED.url,
 	created_at = EXCLUDED.created_at
 `
-
-func getConnectionString() (string, error) {
-	address := os.Getenv("DB_ADDRESS")
-	port := os.Getenv("DB_PORT")
-	name := os.Getenv("DB_NAME")
-	username := os.Getenv("DB_USERNAME")
-	password := os.Getenv("DB_PASSWORD")
-
-	errorMessage := "environment file is missing %v parameter"
-
-	switch {
-	case username == "":
-		return "", fmt.Errorf(errorMessage, "username")
-	case password == "":
-		return "", fmt.Errorf(errorMessage, "passwod")
-	case address == "":
-		return "", fmt.Errorf(errorMessage, "address")
-	case port == "":
-		return "", fmt.Errorf(errorMessage, "port")
-	case name == "":
-		return "", fmt.Errorf(errorMessage, "name")
-	}
-
-	connString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=prefer",
-		username, password, address, port, name)
-
-	fmt.Println(connString)
-	return connString, nil
-}
 
 func migrateDB(connString string) {
 	m, err := migrate.New(
@@ -141,9 +111,9 @@ func postgresSink(ctx context.Context, connString string) {
 func main() {
 	_ = godotenv.Load()
 
-	connString, err := getConnectionString()
-	if err != nil {
-		log.Fatalf("ERROR consumer.go@main() -> failed to get connection string: %v", err)
+	connString := os.Getenv("CONNECTION_STRING")
+	if connString == "" {
+		log.Fatal("ERROR consumer.go@main() -> environment variable 'CONNECTION_STRING' does not exist")
 	}
 
 	migrateDB(connString)

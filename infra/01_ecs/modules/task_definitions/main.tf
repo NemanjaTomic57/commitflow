@@ -185,6 +185,11 @@ resource "aws_ecs_task_definition" "grafana" {
       name      = "grafana"
       image     = "grafana/grafana:12.2"
       essential = true
+      portMappings = [
+        {
+          containerPort = 3000
+        }
+      ]
 
       secrets = [
         {

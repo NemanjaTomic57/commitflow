@@ -116,7 +116,7 @@ func executeRequest(url string) (*http.Response, error) {
 
 	// Send request
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 
 	resp, err := client.Do(req)

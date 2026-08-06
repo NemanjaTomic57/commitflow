@@ -66,7 +66,11 @@ func fetchAPI[T responseType](url string) []T {
 	// Iterate as long as there is an URL
 	for url != "" {
 		// Make the API request with the current page
-		httpResponse := executeRequest(url)
+		httpResponse, err := executeRequest(url)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
 
 		// Get the next link from the paginated result
 		url = getNextLink(httpResponse)
@@ -93,7 +97,7 @@ func fetchAPI[T responseType](url string) []T {
 }
 
 // Makes a single request to the GitLab API.
-func executeRequest(url string) *http.Response {
+func executeRequest(url string) (*http.Response, error) {
 	gitlabPAT := os.Getenv("GITLAB_PAT")
 	if gitlabPAT == "" {
 		log.Fatalln("GITLAB_PAT is not set")
@@ -102,29 +106,27 @@ func executeRequest(url string) *http.Response {
 	// Create the HTTP request
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Printf("gitlab.executeRequest() -> error creating the request: %v", err)
+		return nil, fmt.Errorf("gitlab.executeRequest() -> error creating the request: %v", err)
 	}
 
 	req.Header.Add("PRIVATE-TOKEN", gitlabPAT)
 
 	// Send request
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("gitlab.executeRequest() -> error sending the request: %v", err)
-		return nil
+		return nil, fmt.Errorf("gitlab.executeRequest() -> error sending the request: %v", err)
 	}
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("gitlab.executeRequest() -> request status code error: %s with URL: %s", resp.Status, url)
-		return nil
+		return nil, fmt.Errorf("gitlab.executeRequest() -> request status code error: %s with URL: %s", resp.Status, url)
 	}
 
-	return resp
+	return resp, nil
 }
 
 // Extracts the next link from the paginated GitLab API response.

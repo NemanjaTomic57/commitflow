@@ -22,8 +22,6 @@ aws ecr get-login-password --region "${AWS_REGION}" \
       --username AWS \
       --password-stdin "${ECR_REGISTRY}"
 
-cat /etc/os-release
-
 # Test & Lint
 
 golangci-lint run   
